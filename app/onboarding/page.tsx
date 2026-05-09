@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, Check, Brain, Globe, Shield, Lock, HelpCircle } from "lucide-react";
