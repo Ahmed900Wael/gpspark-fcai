@@ -157,7 +157,6 @@ export default function TeamFormation() {
               Create Team
             </Button>
           </div>
-          </div>
 
           {/* Search */}
           <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-200 bg-white mb-8">
