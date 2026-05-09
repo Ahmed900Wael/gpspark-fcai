@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/navbar";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, HelpCircle, 
   Plus, Share2, CheckCircle2, Circle, Clock, MessageSquare, 
-  FileText, ChevronRight, Download, Bell
+  FileText, ChevronRight, Download
 } from "lucide-react";
 
 const phases = [
@@ -109,55 +110,26 @@ export default function Milestones() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Dashboard
-            </Link>
-            <Link href="/milestones" className="text-sm font-semibold text-blue-900 border-b-2 border-blue-900 pb-1">
-              Milestones
-            </Link>
-            <Link href="/brainstorm" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Brainstorm AI
-            </Link>
-          </div>
-          <div className="flex items-center gap-4">
-            <Bell className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <Settings className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-medium">
-              JD
-            </div>
-          </div>
-        </header>
+        <Navbar 
+          title="Autonomous Swarm Logistics" 
+          description="Optimization of decentralized routing protocols for urban drone fleets"
+          tag={{ label: "Phase 3", color: "blue" }}
+        />
 
         {/* Milestones Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
-          {/* Breadcrumb & Header */}
+          {/* Breadcrumb & Actions */}
           <div className="mb-8">
-            <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
+            <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
               <span>PROJECTS</span>
               <ChevronRight className="h-4 w-4" />
               <span>AUTONOMOUS SWARM LOGISTICS</span>
             </div>
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                  Autonomous Swarm Logistics
-                </h1>
-                <p className="text-slate-600">
-                  Optimization of decentralized routing protocols for urban drone fleets.
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  In Progress
-                </span>
-                <Button variant="outline" className="border-slate-200">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Project Brief
-                </Button>
-              </div>
+            <div className="flex items-center justify-end gap-3">
+              <Button variant="outline" className="border-slate-200">
+                <Share2 className="h-4 w-4 mr-2" />
+                Project Brief
+              </Button>
             </div>
           </div>
 

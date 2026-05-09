@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/navbar";
 import { 
   LayoutDashboard, Library, Users, Brain, Flag, GraduationCap, Settings, HelpCircle, 
-  Plus, Search, Filter, Bell, User, MessageSquare, Lightbulb
+  Plus, Search, Filter, User, MessageSquare, Lightbulb
 } from "lucide-react";
 import { useState } from "react";
 
@@ -137,48 +138,25 @@ export default function TeamFormation() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Homepage
-            </Link>
-            <Link href="/library" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Library
-            </Link>
-            <Link href="/team" className="text-sm font-semibold text-blue-900 border-b-2 border-blue-900 pb-1">
-              Team Formation
-            </Link>
-          </div>
-          <div className="flex items-center gap-4">
-            <Bell className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <User className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <Button className="bg-blue-900 hover:bg-blue-800 text-white">
-              Sign In
-            </Button>
-          </div>
-        </header>
+        <Navbar 
+          title="Team Formation" 
+          description="Connect with fellow seniors to build your capstone project team"
+          tag={{ label: "12 Active Teams", color: "green" }}
+        />
 
         {/* Team Formation Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
-          {/* Header */}
-          <div className="flex items-start justify-between mb-8">
-            <div>
-              <h1 className="text-4xl font-bold text-blue-900 mb-3">Team Formation</h1>
-              <p className="text-slate-600 max-w-2xl">
-                Connect with fellow seniors to build your capstone project team. 
-                Filter by technical skills, project interests, and availability.
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" className="border-blue-200 text-blue-900 bg-blue-50 hover:bg-blue-100">
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-              </Button>
-              <Button className="bg-green-700 hover:bg-green-600 text-white">
-                <Users className="h-4 w-4 mr-2" />
-                Create Team
-              </Button>
-            </div>
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 mb-8">
+            <Button variant="outline" className="border-blue-200 text-blue-900 bg-blue-50 hover:bg-blue-100">
+              <Filter className="h-4 w-4 mr-2" />
+              Filters
+            </Button>
+            <Button className="bg-green-700 hover:bg-green-600 text-white">
+              <Users className="h-4 w-4 mr-2" />
+              Create Team
+            </Button>
+          </div>
           </div>
 
           {/* Search */}

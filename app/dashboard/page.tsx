@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/navbar";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, 
-  HelpCircle, Plus, Bell, TrendingUp, Clock, Target, Award
+  HelpCircle, Plus, TrendingUp, Clock, Target, Award
 } from "lucide-react";
 
 const stats = [
@@ -89,18 +90,11 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Welcome back, John!</h1>
-            <p className="text-sm text-slate-500">Here's what's happening with your project today.</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Bell className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-medium">
-              JD
-            </div>
-          </div>
-        </header>
+        <Navbar 
+          title="Welcome back, John!" 
+          description="Here's what's happening with your project today."
+          tag={{ label: "In Progress", color: "green" }}
+        />
 
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">

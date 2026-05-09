@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/navbar";
 import { 
   LayoutDashboard, Library, Users, Brain, Flag, GraduationCap, Settings, HelpCircle, 
   Plus, Search, Filter, Calendar, Star, ArrowRight, Lightbulb,
-  Bell, User, ChevronDown
+  User, ChevronDown
 } from "lucide-react";
 import { useState } from "react";
 
@@ -118,38 +119,14 @@ export default function GPLibrary() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Homepage
-            </Link>
-            <Link href="/library" className="text-sm font-semibold text-blue-900 border-b-2 border-blue-900 pb-1">
-              Library
-            </Link>
-            <Link href="/team" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Team Formation
-            </Link>
-          </div>
-          <div className="flex items-center gap-4">
-            <Bell className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <User className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <Button className="bg-blue-900 hover:bg-blue-800 text-white">
-              Sign In
-            </Button>
-          </div>
-        </header>
+        <Navbar 
+          title="GP Library" 
+          description="Explore historical graduation projects and analyze market gaps"
+          tag={{ label: "200+ Projects", color: "blue" }}
+        />
 
         {/* Library Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-slate-900 mb-3">GP Library</h1>
-            <p className="text-slate-600 max-w-2xl">
-              Explore historical graduation projects. Analyze market gaps and technical implementations to define your own{" "}
-              <span className="font-semibold text-green-600">Uniqueness Factor</span>.
-            </p>
-          </div>
-
           {/* Tabs */}
           <div className="flex items-center justify-between mb-6">
             <div className="inline-flex bg-slate-100 rounded-lg p-1">

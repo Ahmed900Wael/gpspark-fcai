@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/navbar";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, 
-  HelpCircle, Plus, Bell, Search, Star, Calendar, MessageSquare, 
+  HelpCircle, Plus, Search, Star, Calendar, MessageSquare, 
   CheckCircle2, Clock, Filter, ChevronDown, Mail
 } from "lucide-react";
 import { useState } from "react";
@@ -155,37 +156,14 @@ export default function Mentors() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Dashboard
-            </Link>
-            <Link href="/milestones" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Milestones
-            </Link>
-            <Link href="/mentors" className="text-sm font-semibold text-blue-900 border-b-2 border-blue-900 pb-1">
-              Mentors
-            </Link>
-          </div>
-          <div className="flex items-center gap-4">
-            <Bell className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-medium">
-              JD
-            </div>
-          </div>
-        </header>
+        <Navbar 
+          title="Find Your Mentor" 
+          description="Connect with industry experts and academic professionals"
+          tag={{ label: "24 Available", color: "green" }}
+        />
 
         {/* Mentors Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-slate-900 mb-3">Find Your Mentor</h1>
-            <p className="text-slate-600 max-w-2xl">
-              Connect with industry experts and academic professionals who can guide your graduation project 
-              from concept to completion.
-            </p>
-          </div>
-
           {/* Stats */}
           <div className="grid md:grid-cols-3 gap-4 mb-8">
             <div className="bg-white rounded-xl border border-slate-200 p-6">

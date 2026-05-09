@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/navbar";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, Plus, Send, Paperclip, 
-  Clock, MoreVertical, User, Bell, HelpCircle, CheckCircle2, 
+  Clock, MoreVertical, User, HelpCircle, CheckCircle2, 
   AlertTriangle, Battery, BarChart3, FileText, ChevronRight 
 } from "lucide-react";
 import { useState } from "react";
@@ -126,29 +127,11 @@ export default function BrainstormAI() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Dashboard
-            </Link>
-            <Link href="/brainstorm" className="text-sm font-semibold text-blue-900 border-b-2 border-blue-900 pb-1">
-              Brainstorm AI
-            </Link>
-            <Link href="/milestones" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Milestones
-            </Link>
-            <Link href="/mentors" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Mentors
-            </Link>
-          </div>
-          <div className="flex items-center gap-4">
-            <Bell className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <HelpCircle className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-medium">
-              JD
-            </div>
-          </div>
-        </header>
+        <Navbar 
+          title="Brainstorming Session" 
+          description="Project Focus: Smart Agriculture Systems"
+          tag={{ label: "Active", color: "green" }}
+        />
 
         {/* Chat Area */}
         <div className="flex-1 flex overflow-hidden">
