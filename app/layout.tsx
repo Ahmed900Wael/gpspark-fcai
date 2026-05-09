@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "GPspark - Transform Your Graduation Project",
+  title: "GPSpark - Transform Your Graduation Project",
   description: "Bridge the gap between academic theory and market reality. Use AI-driven insights to refine your ideas, find the perfect team, and build a project that stands out.",
 };
 

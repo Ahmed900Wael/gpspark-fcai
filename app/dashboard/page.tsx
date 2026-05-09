@@ -38,7 +38,7 @@ export default function Dashboard() {
               <span className="text-xs font-bold text-white">GP</span>
             </div>
             <div>
-              <div className="text-sm font-semibold text-slate-900">GPspark</div>
+              <div className="text-sm font-semibold text-slate-900">GPSpark</div>
               <div className="text-xs text-slate-500">Graduation Project</div>
             </div>
           </div>

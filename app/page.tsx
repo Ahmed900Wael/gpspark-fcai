@@ -12,7 +12,7 @@ export default function Home() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700">
               <span className="text-sm font-bold text-white">GP</span>
             </div>
-            <span className="text-xl font-bold text-slate-900">GPspark</span>
+            <span className="text-xl font-bold text-slate-900">GPSpark</span>
           </div>
           
           <div className="hidden md:flex items-center gap-6">
@@ -60,7 +60,7 @@ export default function Home() {
             </h1>
             
             <p className="text-lg text-slate-600 leading-relaxed">
-              GPspark bridges the gap between academic theory and market reality. 
+              GPSpark bridges the gap between academic theory and market reality. 
               Use AI-driven insights to refine your ideas, find the perfect team, 
               and build a project that stands out to recruiters and investors.
             </p>
@@ -120,7 +120,7 @@ export default function Home() {
             Master Your Project Journey
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto">
-            From the first spark of an idea to the final presentation, GPspark provides 
+            From the first spark of an idea to the final presentation, GPSpark provides 
             the specialized tools required for capstone success.
           </p>
         </div>
@@ -231,7 +231,7 @@ export default function Home() {
               Ready to lead your own project?
             </h2>
             <p className="text-blue-100 mb-8">
-              Join GPspark today and turn your academic requirements into your first career milestone.
+              Join GPSpark today and turn your academic requirements into your first career milestone.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button className="bg-amber-400 text-blue-900 hover:bg-amber-300 px-8 py-5 text-base font-semibold">
@@ -254,7 +254,7 @@ export default function Home() {
                 <span className="text-sm font-bold text-white">GP</span>
               </div>
               <div>
-                <span className="text-lg font-bold text-slate-900">GPspark</span>
+                <span className="text-lg font-bold text-slate-900">GPSpark</span>
                 <span className="text-slate-500 text-sm ml-2">FCAI</span>
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function Home() {
             </div>
             
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-500">© 2024 GPspark FCAI. All rights reserved.</span>
+              <span className="text-sm text-slate-500">© 2024 GPSpark FCAI. All rights reserved.</span>
             </div>
           </div>
         </div>

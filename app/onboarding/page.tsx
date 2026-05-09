@@ -94,7 +94,7 @@ export default function Onboarding() {
 
             <div className="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-xl p-6 text-white">
               <div className="text-xs font-medium text-blue-200 uppercase tracking-wide mb-2">
-                GPspark Insight
+                GPSpark Insight
               </div>
               <p className="text-sm leading-relaxed">
                 Students who complete their profile are{" "}

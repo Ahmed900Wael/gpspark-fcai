@@ -58,7 +58,7 @@ export default function Milestones() {
               <span className="text-xs font-bold text-white">GP</span>
             </div>
             <div>
-              <div className="text-sm font-semibold text-slate-900">GPspark</div>
+              <div className="text-sm font-semibold text-slate-900">GPSpark</div>
               <div className="text-xs text-slate-500">Graduation Project</div>
             </div>
           </div>
@@ -374,7 +374,7 @@ export default function Milestones() {
               <Link href="/privacy" className="hover:text-slate-900">Privacy Policy</Link>
               <Link href="/support" className="hover:text-slate-900">Contact Support</Link>
             </div>
-            <span className="text-xs text-slate-500">© 2024 GPspark FCAI. All rights reserved.</span>
+            <span className="text-xs text-slate-500">© 2024 GPSpark FCAI. All rights reserved.</span>
           </div>
         </footer>
       </div>

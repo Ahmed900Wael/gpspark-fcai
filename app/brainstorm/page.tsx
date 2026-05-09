@@ -75,7 +75,7 @@ export default function BrainstormAI() {
               <span className="text-xs font-bold text-white">GP</span>
             </div>
             <div>
-              <div className="text-sm font-semibold text-slate-900">GPspark</div>
+              <div className="text-sm font-semibold text-slate-900">GPSpark</div>
               <div className="text-xs text-slate-500">Graduation Project</div>
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function BrainstormAI() {
                     </div>
                     <div className="flex items-center gap-2 mt-2 px-1">
                       <span className={`text-xs font-medium ${msg.role === "assistant" ? "text-slate-500" : "text-slate-400"}`}>
-                        {msg.role === "assistant" ? "GPspark AI" : "You"}
+                        {msg.role === "assistant" ? "GPSpark AI" : "You"}
                       </span>
                       <span className="text-xs text-slate-400">• {msg.time}</span>
                     </div>
@@ -229,7 +229,7 @@ export default function BrainstormAI() {
               </div>
               <div className="text-center mt-3">
                 <span className="text-xs text-slate-400 uppercase tracking-wide">
-                  Powered by GPspark Scholastic Engine v2.4
+                  Powered by GPSpark Scholastic Engine v2.4
                 </span>
               </div>
             </div>

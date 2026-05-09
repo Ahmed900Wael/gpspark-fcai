@@ -1,4 +1,4 @@
-# GPspark Project Plan
+# GPSpark Project Plan
 
 ## Technology Stack
 
