@@ -136,10 +136,16 @@ export default function TeamFormation() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <SimpleHeader />
+        <SimpleHeader 
+          links={[
+            { label: "Homepage", href: "/" },
+            { label: "Library", href: "/library" },
+            { label: "Team Formation", href: "/team", active: true },
+          ]}
+        />
 
         {/* Team Formation Content */}
-        <div className="flex-1 overflow-y-auto p-6 md:p-8">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-20">
           {/* Section Heading with Tag */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">

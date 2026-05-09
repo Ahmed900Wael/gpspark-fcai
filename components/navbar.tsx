@@ -9,7 +9,7 @@ interface SimpleHeaderProps {
 
 export function SimpleHeader({ links, showBell = true, userInitials = "JD" }: SimpleHeaderProps) {
   return (
-    <header className="bg-white border-b border-slate-200 px-6 py-4">
+    <header className="fixed top-0 left-64 right-0 z-40 bg-white border-b border-slate-200 px-6 py-4">
       <div className="flex items-center justify-between">
         {links && links.length > 0 ? (
           <div className="flex items-center gap-6">
