@@ -63,9 +63,7 @@ export default function GPLibrary() {
       <aside className="fixed left-0 top-0 w-64 h-screen bg-white border-r border-slate-200 flex flex-col z-50">
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
-              <span className="text-xs font-bold text-white">GP</span>
-            </div>
+            <img src="/logo.svg" alt="GPSpark Logo" className="w-10 h-10" />
             <div>
               <div className="text-sm font-semibold text-slate-900">GPSpark</div>
               <div className="text-xs text-slate-500">Graduation Project</div>
@@ -309,9 +307,7 @@ export default function GPLibrary() {
         <footer className="border-t border-slate-200 bg-white px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-blue-600 to-indigo-700">
-                <span className="text-xs font-bold text-white">GP</span>
-              </div>
+              <img src="/logo.svg" alt="GPSpark Logo" className="w-6 h-6" />
             </div>
             <div className="flex gap-6 text-xs text-slate-500">
               <Link href="/about" className="hover:text-slate-900">About</Link>

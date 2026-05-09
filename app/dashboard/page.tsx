@@ -34,9 +34,7 @@ export default function Dashboard() {
       <aside className="fixed left-0 top-0 w-64 h-screen bg-white border-r border-slate-200 flex flex-col z-50">
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
-              <span className="text-xs font-bold text-white">GP</span>
-            </div>
+            <img src="/logo.svg" alt="GPSpark Logo" className="w-10 h-10" />
             <div>
               <div className="text-sm font-semibold text-slate-900">GPSpark</div>
               <div className="text-xs text-slate-500">Graduation Project</div>

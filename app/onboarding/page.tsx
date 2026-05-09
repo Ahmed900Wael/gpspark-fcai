@@ -33,8 +33,8 @@ export default function Onboarding() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Header */}
       <div className="flex flex-col items-center pt-12 pb-8">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 mb-6">
-          <span className="text-2xl font-bold text-white">GP</span>
+        <div className="flex h-16 w-16 items-center justify-center mb-6">
+          <img src="/logo.svg" alt="GPSpark Logo" className="w-16 h-16" />
         </div>
         <p className="text-slate-600 text-lg">
           Your journey toward a premium graduation project starts here.
