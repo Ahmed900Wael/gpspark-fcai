@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Settings, HelpCircle, 
   Plus, Share2, CheckCircle2, Circle, Clock, MessageSquare, 
-  FileText, Users, ChevronRight, Download
+  FileText, Users, ChevronRight, Download, Bell
 } from "lucide-react";
 
 const phases = [
