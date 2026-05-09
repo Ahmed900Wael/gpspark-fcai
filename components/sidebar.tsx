@@ -29,7 +29,7 @@ export function Sidebar({ activePage }: SidebarProps) {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-[60] p-2.5 rounded-lg bg-white border border-slate-200 shadow-md lg:hidden touch-manipulation active:scale-95 transition-transform"
+        className="fixed top-4 left-4 z-[70] p-2.5 rounded-lg bg-white border border-slate-200 shadow-md lg:hidden touch-manipulation active:scale-95 transition-transform"
         aria-label="Toggle menu"
         style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))' }}
       >
