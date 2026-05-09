@@ -12,18 +12,6 @@ export default function Home() {
             <img src="/logo.svg" alt="GPSpark Logo" className="w-8 h-8" />
             <span className="text-xl font-bold text-slate-900">GPSpark</span>
           </div>
-          
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-sm font-medium text-blue-600 border-b-2 border-blue-600 pb-1">
-              Homepage
-            </Link>
-            <Link href="/library" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
-              Library
-            </Link>
-            <Link href="/team" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
-              Team Formation
-            </Link>
-          </div>
 
           <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
