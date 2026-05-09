@@ -7,7 +7,7 @@ interface SimpleHeaderProps {
 
 export function SimpleHeader({ showBell = true, userInitials = "JD" }: SimpleHeaderProps) {
   return (
-    <header className="bg-white border-b border-slate-200 px-6 py-4">
+    <header className="bg-white border-b border-slate-200 px-4 pl-16 lg:pl-6 py-4">
       <div className="flex items-center justify-end gap-4">
         {showBell && (
           <Bell className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900 transition-colors" />

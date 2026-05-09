@@ -29,7 +29,9 @@ export function Sidebar({ activePage }: SidebarProps) {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-white border border-slate-200 shadow-sm lg:hidden"
+        className="fixed top-4 left-4 z-[60] p-2.5 rounded-lg bg-white border border-slate-200 shadow-md lg:hidden touch-manipulation active:scale-95 transition-transform"
+        aria-label="Toggle menu"
+        style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))' }}
       >
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
@@ -37,13 +39,13 @@ export function Sidebar({ activePage }: SidebarProps) {
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-[55] lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 w-64 h-screen bg-white border-r border-slate-200 flex flex-col z-50 transition-transform duration-300 lg:translate-x-0 ${
+      <aside className={`fixed left-0 top-0 w-64 h-screen bg-white border-r border-slate-200 flex flex-col z-[60] transition-transform duration-300 ease-in-out lg:translate-x-0 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}>
         <div className="p-6 border-b border-slate-200">
