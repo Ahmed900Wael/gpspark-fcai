@@ -48,9 +48,9 @@ const nextPhaseTasks = [
 
 export default function Milestones() {
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* Left Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
+    <div className="min-h-screen bg-slate-50">
+      {/* Left Sidebar - Fixed */}
+      <aside className="fixed left-0 top-0 w-64 h-screen bg-white border-r border-slate-200 flex flex-col z-50">
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
@@ -101,7 +101,7 @@ export default function Milestones() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
         <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
