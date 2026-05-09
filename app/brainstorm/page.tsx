@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { 
-  LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, Plus, Send, Paperclip, 
-  Clock, MoreVertical, User, HelpCircle, CheckCircle2, 
-  AlertTriangle, Battery, BarChart3, FileText, ChevronRight 
+  Send, Paperclip, Clock, MoreVertical, User, HelpCircle, CheckCircle2, 
+  AlertTriangle, Battery, BarChart3, FileText
 } from "lucide-react";
 import { useState } from "react";
 
@@ -67,72 +67,20 @@ export default function BrainstormAI() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Left Sidebar - Fixed */}
-      <aside className="fixed left-0 top-0 w-64 h-screen bg-white border-r border-slate-200 flex flex-col z-50">
-        <div className="p-6 border-b border-slate-200">
-          <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="GPSpark Logo" className="w-10 h-10" />
-            <div>
-              <div className="text-sm font-semibold text-slate-900">GPSpark</div>
-              <div className="text-xs text-slate-500">Graduation Project</div>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-1">
-          <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <LayoutDashboard className="h-5 w-5" />
-            <span className="text-sm font-medium">Dashboard</span>
-          </Link>
-          <Link href="/brainstorm" className="flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-50 text-blue-900">
-            <Brain className="h-5 w-5" />
-            <span className="text-sm font-semibold">Brainstorm AI</span>
-          </Link>
-          <Link href="/milestones" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Flag className="h-5 w-5" />
-            <span className="text-sm font-medium">Milestones</span>
-          </Link>
-          <Link href="/mentors" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <GraduationCap className="h-5 w-5" />
-            <span className="text-sm font-medium">Mentors</span>
-          </Link>
-          <Link href="/library" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Library className="h-5 w-5" />
-            <span className="text-sm font-medium">GP Library</span>
-          </Link>
-          <Link href="/team" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Users className="h-5 w-5" />
-            <span className="text-sm font-medium">Team Search</span>
-          </Link>
-        </nav>
-
-        <div className="p-4 space-y-1 border-t border-slate-200">
-          <Button className="w-full bg-blue-900 hover:bg-blue-800 text-white mb-2">
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
-          <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Settings className="h-5 w-5" />
-            <span className="text-sm font-medium">Settings</span>
-          </Link>
-          <Link href="/support" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <HelpCircle className="h-5 w-5" />
-            <span className="text-sm font-medium">Support</span>
-          </Link>
-        </div>
-      </aside>
+      {/* Sidebar - Responsive */}
+      <Sidebar activePage="/brainstorm" />
 
       {/* Main Content */}
-      <div className="ml-64 flex flex-col min-h-screen">
+      <div className="lg:ml-64 flex flex-col min-h-screen">
 
         {/* Top Navigation */}
         <SimpleHeader />
 
         {/* Chat Area */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           <div className="flex-1 flex flex-col">
             {/* Chat Header */}
-            <div className="px-6 py-4 border-b border-slate-200 bg-white">
+            <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-white">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
@@ -140,7 +88,7 @@ export default function BrainstormAI() {
                       Active
                     </span>
                   </div>
-                  <h1 className="text-2xl font-bold text-slate-900">Brainstorming Session</h1>
+                  <h1 className="text-xl md:text-2xl font-bold text-slate-900">Brainstorming Session</h1>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>
                     <span className="text-sm text-slate-600">Project Focus: Smart Agriculture Systems</span>
@@ -235,7 +183,7 @@ export default function BrainstormAI() {
           </div>
 
           {/* Right Sidebar */}
-          <aside className="w-80 bg-slate-50 border-l border-slate-200 p-6 overflow-y-auto">
+          <aside className="w-full lg:w-80 bg-slate-50 border-l border-slate-200 p-4 md:p-6 overflow-y-auto max-h-[50vh] lg:max-h-none">
             {/* Project Feasibility */}
             <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
               <div className="flex items-center justify-between mb-4">

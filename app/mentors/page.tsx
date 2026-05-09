@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { 
-  LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, 
-  HelpCircle, Plus, Search, Star, Calendar, MessageSquare, 
+  Search, Star, Calendar, MessageSquare, 
   CheckCircle2, Clock, Filter, ChevronDown, Mail
 } from "lucide-react";
 import { useState } from "react";
@@ -96,76 +96,24 @@ export default function Mentors() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Left Sidebar - Fixed */}
-      <aside className="fixed left-0 top-0 w-64 h-screen bg-white border-r border-slate-200 flex flex-col z-50">
-        <div className="p-6 border-b border-slate-200">
-          <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="GPSpark Logo" className="w-10 h-10" />
-            <div>
-              <div className="text-sm font-semibold text-slate-900">GPSpark</div>
-              <div className="text-xs text-slate-500">Graduation Project</div>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-1">
-          <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <LayoutDashboard className="h-5 w-5" />
-            <span className="text-sm font-medium">Dashboard</span>
-          </Link>
-          <Link href="/brainstorm" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Brain className="h-5 w-5" />
-            <span className="text-sm font-medium">Brainstorm AI</span>
-          </Link>
-          <Link href="/milestones" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Flag className="h-5 w-5" />
-            <span className="text-sm font-medium">Milestones</span>
-          </Link>
-          <Link href="/mentors" className="flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-50 text-blue-900">
-            <GraduationCap className="h-5 w-5" />
-            <span className="text-sm font-semibold">Mentors</span>
-          </Link>
-          <Link href="/library" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Library className="h-5 w-5" />
-            <span className="text-sm font-medium">GP Library</span>
-          </Link>
-          <Link href="/team" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Users className="h-5 w-5" />
-            <span className="text-sm font-medium">Team Search</span>
-          </Link>
-        </nav>
-
-        <div className="p-4 space-y-1 border-t border-slate-200">
-          <Button className="w-full bg-blue-900 hover:bg-blue-800 text-white mb-2">
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
-          <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Settings className="h-5 w-5" />
-            <span className="text-sm font-medium">Settings</span>
-          </Link>
-          <Link href="/support" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <HelpCircle className="h-5 w-5" />
-            <span className="text-sm font-medium">Support</span>
-          </Link>
-        </div>
-      </aside>
+      {/* Sidebar - Responsive */}
+      <Sidebar activePage="/mentors" />
 
       {/* Main Content */}
-      <div className="ml-64 flex flex-col min-h-screen">
+      <div className="lg:ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
         <SimpleHeader />
 
         {/* Mentors Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
           {/* Section Heading with Tag */}
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <div className="flex items-center gap-3 mb-2">
               <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
                 24 Available
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-slate-900">Find Your Mentor</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Find Your Mentor</h1>
             <p className="text-slate-600 mt-1 max-w-2xl">
               Connect with industry experts and academic professionals who can guide your graduation project 
               from concept to completion.
@@ -173,7 +121,7 @@ export default function Mentors() {
           </div>
 
           {/* Stats */}
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <div className="flex items-center gap-3 mb-2">
                 <GraduationCap className="h-5 w-5 text-blue-600" />
@@ -198,8 +146,8 @@ export default function Mentors() {
           </div>
 
           {/* Search & Filters */}
-          <div className="flex flex-wrap gap-3 mb-8">
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white flex-1 min-w-[200px]">
+          <div className="flex flex-col sm:flex-row gap-3 mb-8">
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white flex-1">
               <Search className="h-4 w-4 text-slate-400" />
               <input
                 type="text"
@@ -228,7 +176,7 @@ export default function Mentors() {
           </div>
 
           {/* Mentor Cards */}
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <div className="grid sm:grid-cols-2 gap-6 mb-8">
             {mentors.map((mentor) => (
               <div key={mentor.id} className="bg-white rounded-xl border border-slate-200 p-6">
                 <div className="flex items-start gap-4 mb-4">

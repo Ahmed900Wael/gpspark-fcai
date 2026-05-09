@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { 
-  LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, 
-  HelpCircle, Plus, TrendingUp, Clock, Target, Award
+  TrendingUp, Clock, Target, Award
 } from "lucide-react";
 
 const stats = [
@@ -30,81 +30,29 @@ const upcomingMilestones = [
 export default function Dashboard() {
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Left Sidebar - Fixed */}
-      <aside className="fixed left-0 top-0 w-64 h-screen bg-white border-r border-slate-200 flex flex-col z-50">
-        <div className="p-6 border-b border-slate-200">
-          <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="GPSpark Logo" className="w-10 h-10" />
-            <div>
-              <div className="text-sm font-semibold text-slate-900">GPSpark</div>
-              <div className="text-xs text-slate-500">Graduation Project</div>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-1">
-          <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-50 text-blue-900">
-            <LayoutDashboard className="h-5 w-5" />
-            <span className="text-sm font-semibold">Dashboard</span>
-          </Link>
-          <Link href="/brainstorm" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Brain className="h-5 w-5" />
-            <span className="text-sm font-medium">Brainstorm AI</span>
-          </Link>
-          <Link href="/milestones" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Flag className="h-5 w-5" />
-            <span className="text-sm font-medium">Milestones</span>
-          </Link>
-          <Link href="/mentors" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <GraduationCap className="h-5 w-5" />
-            <span className="text-sm font-medium">Mentors</span>
-          </Link>
-          <Link href="/library" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Library className="h-5 w-5" />
-            <span className="text-sm font-medium">GP Library</span>
-          </Link>
-          <Link href="/team" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Users className="h-5 w-5" />
-            <span className="text-sm font-medium">Team Search</span>
-          </Link>
-        </nav>
-
-        <div className="p-4 space-y-1 border-t border-slate-200">
-          <Button className="w-full bg-blue-900 hover:bg-blue-800 text-white mb-2">
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
-          <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Settings className="h-5 w-5" />
-            <span className="text-sm font-medium">Settings</span>
-          </Link>
-          <Link href="/support" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <HelpCircle className="h-5 w-5" />
-            <span className="text-sm font-medium">Support</span>
-          </Link>
-        </div>
-      </aside>
+      {/* Sidebar - Responsive */}
+      <Sidebar activePage="/dashboard" />
 
       {/* Main Content */}
-      <div className="ml-64 flex flex-col min-h-screen">
+      <div className="lg:ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
         <SimpleHeader />
 
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
           {/* Section Heading with Tag */}
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <div className="flex items-center gap-3 mb-2">
               <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
                 In Progress
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-slate-900">Welcome back, John!</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Welcome back, John!</h1>
             <p className="text-slate-600 mt-1">Here's what's happening with your project today.</p>
           </div>
 
           {/* Stats Grid */}
-          <div className="grid md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {stats.map((stat, index) => (
               <div key={index} className="bg-white rounded-xl border border-slate-200 p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -123,7 +71,7 @@ export default function Dashboard() {
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Current Project */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6">
+            <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-4 md:p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-slate-900">Current Project</h3>
                 <Link href="/milestones" className="text-sm text-blue-600 hover:underline">
@@ -158,7 +106,7 @@ export default function Dashboard() {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
                 <Link href="/brainstorm">
@@ -191,7 +139,7 @@ export default function Dashboard() {
 
           <div className="grid lg:grid-cols-2 gap-6 mt-6">
             {/* Recent Activity */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">Recent Activity</h3>
               <div className="space-y-4">
                 {recentActivity.map((activity, index) => (
@@ -209,7 +157,7 @@ export default function Dashboard() {
             </div>
 
             {/* Upcoming Milestones */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">Upcoming Milestones</h3>
               <div className="space-y-3">
                 {upcomingMilestones.map((milestone, index) => (
