@@ -88,17 +88,10 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <SimpleHeader 
-          links={[
-            { label: "Dashboard", href: "/dashboard", active: true },
-            { label: "Brainstorm AI", href: "/brainstorm" },
-            { label: "Milestones", href: "/milestones" },
-            { label: "Mentors", href: "/mentors" },
-          ]}
-        />
+        <SimpleHeader />
 
         {/* Dashboard Content */}
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-28">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8">
           {/* Section Heading with Tag */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">

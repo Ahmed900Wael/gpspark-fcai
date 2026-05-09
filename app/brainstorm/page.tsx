@@ -123,16 +123,10 @@ export default function BrainstormAI() {
       </aside>
 
       {/* Main Content */}
-      <div className="ml-64 flex flex-col min-h-screen pt-24">
+      <div className="ml-64 flex flex-col min-h-screen">
+
         {/* Top Navigation */}
-        <SimpleHeader 
-          links={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "Brainstorm AI", href: "/brainstorm", active: true },
-            { label: "Milestones", href: "/milestones" },
-            { label: "Mentors", href: "/mentors" },
-          ]}
-        />
+        <SimpleHeader />
 
         {/* Chat Area */}
         <div className="flex-1 flex overflow-hidden">
