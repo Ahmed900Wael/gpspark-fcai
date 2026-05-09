@@ -22,8 +22,6 @@ export default function Home() {
                 className="bg-transparent text-sm outline-none w-40"
               />
             </div>
-            <Bell className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
-            <User className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900" />
             <Button className="bg-blue-900 hover:bg-blue-800 text-white">
               Sign In
             </Button>
