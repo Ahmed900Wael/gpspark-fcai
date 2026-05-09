@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
-  LayoutDashboard, Library, Users, Brain, Settings, HelpCircle, 
+  LayoutDashboard, Library, Users, Brain, Flag, GraduationCap, Settings, HelpCircle, 
   Plus, Search, Filter, Bell, User, MessageSquare, Lightbulb
 } from "lucide-react";
 import { useState } from "react";
@@ -81,12 +81,12 @@ export default function TeamFormation() {
       <aside className="fixed left-0 top-0 w-64 h-screen bg-white border-r border-slate-200 flex flex-col z-50">
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-sm font-medium">
-              JD
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
+              <span className="text-xs font-bold text-white">GP</span>
             </div>
             <div>
-              <div className="text-sm font-semibold text-slate-900">FCAI Student</div>
-              <div className="text-xs text-slate-500">Senior Year</div>
+              <div className="text-sm font-semibold text-slate-900">GPspark</div>
+              <div className="text-xs text-slate-500">Graduation Project</div>
             </div>
           </div>
         </div>
@@ -96,6 +96,18 @@ export default function TeamFormation() {
             <LayoutDashboard className="h-5 w-5" />
             <span className="text-sm font-medium">Dashboard</span>
           </Link>
+          <Link href="/brainstorm" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <Brain className="h-5 w-5" />
+            <span className="text-sm font-medium">Brainstorm AI</span>
+          </Link>
+          <Link href="/milestones" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <Flag className="h-5 w-5" />
+            <span className="text-sm font-medium">Milestones</span>
+          </Link>
+          <Link href="/mentors" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <GraduationCap className="h-5 w-5" />
+            <span className="text-sm font-medium">Mentors</span>
+          </Link>
           <Link href="/library" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
             <Library className="h-5 w-5" />
             <span className="text-sm font-medium">GP Library</span>
@@ -103,10 +115,6 @@ export default function TeamFormation() {
           <Link href="/team" className="flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-50 text-blue-900">
             <Users className="h-5 w-5" />
             <span className="text-sm font-semibold">Team Search</span>
-          </Link>
-          <Link href="/brainstorm" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Brain className="h-5 w-5" />
-            <span className="text-sm font-medium">Brainstorm AI</span>
           </Link>
         </nav>
 

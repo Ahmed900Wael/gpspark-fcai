@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
-  LayoutDashboard, Brain, Flag, Settings, Plus, Send, Paperclip, 
+  LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, Plus, Send, Paperclip, 
   Clock, MoreVertical, User, Bell, HelpCircle, CheckCircle2, 
   AlertTriangle, Battery, BarChart3, FileText, ChevronRight 
 } from "lucide-react";
@@ -69,13 +69,13 @@ export default function BrainstormAI() {
       {/* Left Sidebar - Fixed */}
       <aside className="fixed left-0 top-0 w-64 h-screen bg-white border-r border-slate-200 flex flex-col z-50">
         <div className="p-6 border-b border-slate-200">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
               <span className="text-xs font-bold text-white">GP</span>
             </div>
             <div>
-              <div className="text-lg font-bold text-slate-900">GPspark</div>
-              <div className="text-xs text-slate-500 uppercase tracking-wide">Academic Hub</div>
+              <div className="text-sm font-semibold text-slate-900">GPspark</div>
+              <div className="text-xs text-slate-500">Graduation Project</div>
             </div>
           </div>
         </div>
@@ -93,17 +93,33 @@ export default function BrainstormAI() {
             <Flag className="h-5 w-5" />
             <span className="text-sm font-medium">Milestones</span>
           </Link>
+          <Link href="/mentors" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <GraduationCap className="h-5 w-5" />
+            <span className="text-sm font-medium">Mentors</span>
+          </Link>
+          <Link href="/library" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <Library className="h-5 w-5" />
+            <span className="text-sm font-medium">GP Library</span>
+          </Link>
+          <Link href="/team" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <Users className="h-5 w-5" />
+            <span className="text-sm font-medium">Team Search</span>
+          </Link>
+        </nav>
+
+        <div className="p-4 space-y-1 border-t border-slate-200">
+          <Button className="w-full bg-blue-900 hover:bg-blue-800 text-white mb-2">
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Button>
           <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
             <Settings className="h-5 w-5" />
             <span className="text-sm font-medium">Settings</span>
           </Link>
-        </nav>
-
-        <div className="p-4 border-t border-slate-200">
-          <Button className="w-full bg-blue-900 hover:bg-blue-800 text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
+          <Link href="/support" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <HelpCircle className="h-5 w-5" />
+            <span className="text-sm font-medium">Support</span>
+          </Link>
         </div>
       </aside>
 

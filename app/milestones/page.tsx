@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
-  LayoutDashboard, Brain, Flag, GraduationCap, Settings, HelpCircle, 
+  LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, HelpCircle, 
   Plus, Share2, CheckCircle2, Circle, Clock, MessageSquare, 
-  FileText, Users, ChevronRight, Download, Bell
+  FileText, ChevronRight, Download, Bell
 } from "lucide-react";
 
 const phases = [
@@ -80,6 +80,14 @@ export default function Milestones() {
             <GraduationCap className="h-5 w-5" />
             <span className="text-sm font-medium">Mentors</span>
           </Link>
+          <Link href="/library" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <Library className="h-5 w-5" />
+            <span className="text-sm font-medium">GP Library</span>
+          </Link>
+          <Link href="/team" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <Users className="h-5 w-5" />
+            <span className="text-sm font-medium">Team Search</span>
+          </Link>
         </nav>
 
         <div className="p-4 space-y-1 border-t border-slate-200">
@@ -87,15 +95,13 @@ export default function Milestones() {
             <Plus className="h-4 w-4 mr-2" />
             New Project
           </Button>
+          <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <Settings className="h-5 w-5" />
+            <span className="text-sm font-medium">Settings</span>
+          </Link>
           <Link href="/support" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
             <HelpCircle className="h-5 w-5" />
             <span className="text-sm font-medium">Support</span>
-          </Link>
-          <Link href="/logout" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            <span className="text-sm font-medium">Logout</span>
           </Link>
         </div>
       </aside>
