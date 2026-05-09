@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
+import { SimpleHeader } from "@/components/navbar";
 import { 
   LayoutDashboard, Library, Users, Brain, Flag, GraduationCap, Settings, HelpCircle, 
   Plus, Search, Filter, Calendar, Star, ArrowRight, Lightbulb,
@@ -119,14 +119,24 @@ export default function GPLibrary() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <Navbar 
-          title="GP Library" 
-          description="Explore historical graduation projects and analyze market gaps"
-          tag={{ label: "200+ Projects", color: "blue" }}
-        />
+        <SimpleHeader />
 
         {/* Library Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
+          {/* Section Heading with Tag */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-blue-100 text-blue-700 border-blue-200">
+                200+ Projects
+              </span>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900">GP Library</h1>
+            <p className="text-slate-600 mt-1 max-w-2xl">
+              Explore historical graduation projects. Analyze market gaps and technical implementations to define your own{" "}
+              <span className="font-semibold text-green-600">Uniqueness Factor</span>.
+            </p>
+          </div>
+
           {/* Tabs */}
           <div className="flex items-center justify-between mb-6">
             <div className="inline-flex bg-slate-100 rounded-lg p-1">

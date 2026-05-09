@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
+import { SimpleHeader } from "@/components/navbar";
 import { 
   LayoutDashboard, Library, Users, Brain, Flag, GraduationCap, Settings, HelpCircle, 
   Plus, Search, Filter, User, MessageSquare, Lightbulb
@@ -138,14 +138,24 @@ export default function TeamFormation() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <Navbar 
-          title="Team Formation" 
-          description="Connect with fellow seniors to build your capstone project team"
-          tag={{ label: "12 Active Teams", color: "green" }}
-        />
+        <SimpleHeader />
 
         {/* Team Formation Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
+          {/* Section Heading with Tag */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
+                12 Active Teams
+              </span>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900">Team Formation</h1>
+            <p className="text-slate-600 mt-1 max-w-2xl">
+              Connect with fellow seniors to build your capstone project team. 
+              Filter by technical skills, project interests, and availability.
+            </p>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 mb-8">
             <Button variant="outline" className="border-blue-200 text-blue-900 bg-blue-50 hover:bg-blue-100">

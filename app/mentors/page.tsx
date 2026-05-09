@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
+import { SimpleHeader } from "@/components/navbar";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, 
   HelpCircle, Plus, Search, Star, Calendar, MessageSquare, 
@@ -156,14 +156,24 @@ export default function Mentors() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <Navbar 
-          title="Find Your Mentor" 
-          description="Connect with industry experts and academic professionals"
-          tag={{ label: "24 Available", color: "green" }}
-        />
+        <SimpleHeader />
 
         {/* Mentors Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
+          {/* Section Heading with Tag */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
+                24 Available
+              </span>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900">Find Your Mentor</h1>
+            <p className="text-slate-600 mt-1 max-w-2xl">
+              Connect with industry experts and academic professionals who can guide your graduation project 
+              from concept to completion.
+            </p>
+          </div>
+
           {/* Stats */}
           <div className="grid md:grid-cols-3 gap-4 mb-8">
             <div className="bg-white rounded-xl border border-slate-200 p-6">

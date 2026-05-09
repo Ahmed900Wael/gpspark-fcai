@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
+import { SimpleHeader } from "@/components/navbar";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, 
   HelpCircle, Plus, TrendingUp, Clock, Target, Award
@@ -90,14 +90,21 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <Navbar 
-          title="Welcome back, John!" 
-          description="Here's what's happening with your project today."
-          tag={{ label: "In Progress", color: "green" }}
-        />
+        <SimpleHeader />
 
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
+          {/* Section Heading with Tag */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
+                In Progress
+              </span>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900">Welcome back, John!</h1>
+            <p className="text-slate-600 mt-1">Here's what's happening with your project today.</p>
+          </div>
+
           {/* Stats Grid */}
           <div className="grid md:grid-cols-4 gap-4 mb-8">
             {stats.map((stat, index) => (

@@ -1,41 +1,35 @@
+import Link from "next/link";
 import { Bell } from "lucide-react";
 
-interface NavbarProps {
-  title: string;
-  description?: string;
-  tag?: {
-    label: string;
-    color: "blue" | "green" | "amber" | "purple" | "red";
-  };
+interface SimpleHeaderProps {
+  links?: Array<{ label: string; href: string; active?: boolean }>;
   showBell?: boolean;
   userInitials?: string;
 }
 
-const colorMap = {
-  blue: "bg-blue-100 text-blue-700 border-blue-200",
-  green: "bg-green-100 text-green-700 border-green-200",
-  amber: "bg-amber-100 text-amber-700 border-amber-200",
-  purple: "bg-purple-100 text-purple-700 border-purple-200",
-  red: "bg-red-100 text-red-700 border-red-200",
-};
-
-export function Navbar({ title, description, tag, showBell = true, userInitials = "JD" }: NavbarProps) {
+export function SimpleHeader({ links, showBell = true, userInitials = "JD" }: SimpleHeaderProps) {
   return (
     <header className="bg-white border-b border-slate-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">{title}</h1>
-            {description && (
-              <p className="text-sm text-slate-500 mt-0.5">{description}</p>
-            )}
+        {links && links.length > 0 ? (
+          <div className="flex items-center gap-6">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`text-sm font-medium transition-colors ${
+                  link.active
+                    ? "text-blue-900 border-b-2 border-blue-900 pb-1"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
-          {tag && (
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${colorMap[tag.color]}`}>
-              {tag.label}
-            </span>
-          )}
-        </div>
+        ) : (
+          <div />
+        )}
         <div className="flex items-center gap-4">
           {showBell && (
             <Bell className="h-5 w-5 text-slate-600 cursor-pointer hover:text-slate-900 transition-colors" />

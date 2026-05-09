@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
+import { SimpleHeader } from "@/components/navbar";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, Plus, Send, Paperclip, 
   Clock, MoreVertical, User, HelpCircle, CheckCircle2, 
@@ -127,11 +127,7 @@ export default function BrainstormAI() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <Navbar 
-          title="Brainstorming Session" 
-          description="Project Focus: Smart Agriculture Systems"
-          tag={{ label: "Active", color: "green" }}
-        />
+        <SimpleHeader />
 
         {/* Chat Area */}
         <div className="flex-1 flex overflow-hidden">
@@ -140,6 +136,11 @@ export default function BrainstormAI() {
             <div className="px-6 py-4 border-b border-slate-200 bg-white">
               <div className="flex items-center justify-between">
                 <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
+                      Active
+                    </span>
+                  </div>
                   <h1 className="text-2xl font-bold text-slate-900">Brainstorming Session</h1>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>

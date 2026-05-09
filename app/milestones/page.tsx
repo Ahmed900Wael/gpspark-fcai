@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
+import { SimpleHeader } from "@/components/navbar";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, HelpCircle, 
   Plus, Share2, CheckCircle2, Circle, Clock, MessageSquare, 
@@ -110,14 +110,21 @@ export default function Milestones() {
       {/* Main Content */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <Navbar 
-          title="Autonomous Swarm Logistics" 
-          description="Optimization of decentralized routing protocols for urban drone fleets"
-          tag={{ label: "Phase 3", color: "blue" }}
-        />
+        <SimpleHeader />
 
         {/* Milestones Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
+          {/* Section Heading with Tag */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-blue-100 text-blue-700 border-blue-200">
+                Phase 3
+              </span>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900">Autonomous Swarm Logistics</h1>
+            <p className="text-slate-600 mt-1">Optimization of decentralized routing protocols for urban drone fleets.</p>
+          </div>
+
           {/* Breadcrumb & Actions */}
           <div className="mb-8">
             <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
