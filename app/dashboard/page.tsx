@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { 
-  TrendingUp, Clock, Target, Award
+  TrendingUp, Clock, Target, Award, Brain, Users, Library, Flag
 } from "lucide-react";
 
 const stats = [
