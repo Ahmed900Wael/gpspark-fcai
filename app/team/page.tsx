@@ -145,7 +145,7 @@ export default function TeamFormation() {
         />
 
         {/* Team Formation Content */}
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-20">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-28">
           {/* Section Heading with Tag */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">

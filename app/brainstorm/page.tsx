@@ -123,7 +123,7 @@ export default function BrainstormAI() {
       </aside>
 
       {/* Main Content */}
-      <div className="ml-64 flex flex-col min-h-screen pt-16">
+      <div className="ml-64 flex flex-col min-h-screen pt-24">
         {/* Top Navigation */}
         <SimpleHeader 
           links={[
