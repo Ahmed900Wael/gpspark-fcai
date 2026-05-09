@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { 
-  Search, Filter, User, MessageSquare, Lightbulb
+  Search, Filter, User, Users, MessageSquare, Lightbulb
 } from "lucide-react";
 import { useState } from "react";
 

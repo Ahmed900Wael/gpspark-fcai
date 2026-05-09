@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { 
-  Search, Star, Calendar, MessageSquare, 
+  GraduationCap, Search, Star, Calendar, MessageSquare, 
   CheckCircle2, Clock, Filter, ChevronDown, Mail
 } from "lucide-react";
 import { useState } from "react";

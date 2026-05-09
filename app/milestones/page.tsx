@@ -6,7 +6,7 @@ import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { 
   Share2, CheckCircle2, Circle, Clock, MessageSquare, 
-  FileText, ChevronRight, Download
+  FileText, ChevronRight, Download, HelpCircle
 } from "lucide-react";
 
 const phases = [

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { 
-  Send, Paperclip, Clock, MoreVertical, User, HelpCircle, CheckCircle2, 
+  Brain, Send, Paperclip, Clock, MoreVertical, User, HelpCircle, CheckCircle2, 
   AlertTriangle, Battery, BarChart3, FileText
 } from "lucide-react";
 import { useState } from "react";
