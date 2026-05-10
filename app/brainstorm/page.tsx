@@ -642,9 +642,110 @@ export default function BrainstormAI() {
                 </div>
               </div>
             </div>
-          </div>
+
+          {/* Right Sidebar - Analysis Panel */}
+          <aside className="hidden xl:flex w-80 flex-col border-l border-slate-200 bg-slate-50 overflow-y-auto">
+            {/* Project Feasibility */}
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900">Project Feasibility</h3>
+                <BarChart3 className="h-5 w-5 text-slate-400" />
+              </div>
+              <div className="flex justify-center mb-4">
+                <div className="relative w-32 h-32">
+                  <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="8" />
+                    <circle 
+                      cx="50" 
+                      cy="50" 
+                      r="45" 
+                      fill="none" 
+                      stroke="#16a34a" 
+                      strokeWidth="8" 
+                      strokeDasharray={`${82 * 2.83} ${283 - 82 * 2.83}`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-bold text-slate-900">82%</span>
+                    <span className="text-xs text-slate-500 uppercase">High Potential</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 text-center">
+                Your project scores high on <span className="font-semibold text-slate-900">Novelty</span> and <span className="font-semibold text-slate-900">Social Impact</span>.
+              </p>
+            </div>
+
+            {/* Market Gaps */}
+            <div className="p-6 border-b border-slate-200">
+              <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+                Market Gaps Identified
+              </h4>
+              <div className="space-y-3">
+                {marketGaps.map((gap, index) => (
+                  <div key={index} className="bg-white rounded-xl border border-slate-200 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-lg">
+                        {gap.icon}
+                      </div>
+                      <div>
+                        <h5 className="text-sm font-semibold text-slate-900">{gap.title}</h5>
+                        <p className="text-xs text-slate-600 mt-1">{gap.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Technical Challenges */}
+            <div className="p-6 border-b border-slate-200">
+              <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+                Technical Challenges
+              </h4>
+              <div className="space-y-3">
+                {technicalChallenges.map((challenge, index) => (
+                  <div 
+                    key={index} 
+                    className={`bg-white rounded-xl border-l-4 p-4 ${
+                      challenge.severity === "high" ? "border-l-red-500" : "border-l-amber-500"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <challenge.icon className={`h-4 w-4 ${
+                          challenge.severity === "high" ? "text-red-600" : "text-amber-600"
+                        }`} />
+                        <h5 className={`text-sm font-semibold ${
+                          challenge.severity === "high" ? "text-red-700" : "text-amber-700"
+                        }`}>
+                          {challenge.title}
+                        </h5>
+                      </div>
+                      {challenge.severity === "high" && (
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-600">{challenge.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Export Button */}
+            <div className="p-6">
+              <Button className="w-full bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 cursor-pointer">
+                <FileText className="h-4 w-4 mr-2" />
+                Export Research Summary
+              </Button>
+            </div>
+          </aside>
         </div>
+
+        <Footer />
       </div>
+    </div>
     </ProtectedRoute>
   );
 }
