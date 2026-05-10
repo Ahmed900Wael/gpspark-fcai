@@ -8,10 +8,12 @@ import { SimpleHeader } from "@/components/navbar";
 import { ProtectedRoute } from "@/components/protected-route";
 import { Footer } from "@/components/footer";
 import { useAuth } from "@/contexts/auth-context";
+import { useNotification } from "@/contexts/notification-context";
 import { User, Mail, GraduationCap, BookOpen, Target, Edit2, Save, X, LogOut, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function Profile() {
   const { user, signOut, updateProfile, supabaseUser, updateAuthEmail } = useAuth();
+  const { addNotification } = useNotification();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -49,9 +51,11 @@ export default function Profile() {
     const { error } = await updateProfile(formData);
     if (error) {
       console.log("[CLIENT] Profile update failed:", error);
+      addNotification("error", "Update Failed", error);
     } else {
       console.log("[CLIENT] Profile updated successfully");
       setIsEditing(false);
+      addNotification("success", "Profile Updated", "Your profile information has been saved successfully.");
     }
     setIsSaving(false);
   };
@@ -86,11 +90,11 @@ export default function Profile() {
 
   const handleUpdateEmail = async () => {
     if (!newAuthEmail.trim()) {
-      setEmailStatus({ type: "error", message: "Please enter a new email address" });
+      addNotification("error", "Invalid Email", "Please enter a new email address.");
       return;
     }
     if (newAuthEmail === authEmail) {
-      setEmailStatus({ type: "error", message: "New email must be different from current email" });
+      addNotification("error", "No Change", "New email must be different from current email.");
       return;
     }
 
@@ -102,8 +106,10 @@ export default function Profile() {
 
     if (error) {
       setEmailStatus({ type: "error", message: error });
+      addNotification("error", "Email Update Failed", error);
     } else if (requiresConfirmation) {
-      setEmailStatus({ type: "success", message: `Confirmation email sent to ${newAuthEmail}. Check your inbox and click the link to verify. You'll need to sign in with the new email after confirmation.` });
+      setEmailStatus({ type: "success", message: `Confirmation email sent to ${newAuthEmail}. Check your inbox and click the link to verify.` });
+      addNotification("success", "Verification Sent", `A confirmation email has been sent to ${newAuthEmail}. Click the link to verify before signing in with the new email.`);
       setAuthEmail(newAuthEmail);
       setIsEditingEmail(false);
       setNewAuthEmail("");
