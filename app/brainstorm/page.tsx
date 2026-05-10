@@ -30,6 +30,22 @@ interface BrainstormSession {
   created_at: string;
 }
 
+function formatTimeAgo(dateString: string): string {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffSec < 60) return "Just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHour < 24) return `${diffHour}h ago`;
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return date.toLocaleDateString();
+}
+
 const marketGaps = [
   {
     title: "Low-cost LoRaWAN sensors",
@@ -379,6 +395,7 @@ export default function BrainstormAI() {
         <SimpleHeader />
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          {/* Session Sidebar (Desktop) */}
           <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200 bg-white">
             <div className="p-4 border-b border-slate-200">
               <Button
@@ -412,7 +429,7 @@ export default function BrainstormAI() {
                         {session.project_focus}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {new Date(session.created_at).toLocaleDateString()}
+                        {formatTimeAgo(session.created_at)}
                       </p>
                     </div>
                     <button
@@ -427,7 +444,9 @@ export default function BrainstormAI() {
             </div>
           </aside>
 
+          {/* Main Chat Area */}
           <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Chat Header */}
             <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -473,6 +492,7 @@ export default function BrainstormAI() {
               </div>
             </div>
 
+            {/* Session Sidebar (Mobile) */}
             {showSidebar && (
               <div className="lg:hidden border-b border-slate-200 bg-white p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -501,7 +521,7 @@ export default function BrainstormAI() {
                             {session.project_focus}
                           </p>
                           <p className="text-xs text-slate-500">
-                            {new Date(session.created_at).toLocaleDateString()}
+                            {formatTimeAgo(session.created_at)}
                           </p>
                         </div>
                         <button
@@ -517,9 +537,8 @@ export default function BrainstormAI() {
               </div>
             )}
 
-            <div className="flex-1 overflow-hidden flex flex-col">
-              {/* Messages Container */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Messages Container */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                   <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
@@ -620,107 +639,13 @@ export default function BrainstormAI() {
                 <span className="text-xs text-slate-400 uppercase tracking-wide">
                   Powered by OpenRouter AI • Free Tier
                 </span>
-               </div>
-             </div>
+              </div>
+            </div>
            </div>
-          </div>
-
-          {/* <aside className="w-full lg:w-80 bg-slate-50 border-l border-slate-200 p-4 md:p-6 overflow-y-auto">
-            <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-slate-900">Project Feasibility</h3>
-                <BarChart3 className="h-5 w-5 text-slate-400" />
-              </div>
-              <div className="flex justify-center mb-4">
-                <div className="relative w-32 h-32">
-                  <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="8" />
-                    <circle 
-                      cx="50" 
-                      cy="50" 
-                      r="45" 
-                      fill="none" 
-                      stroke="#16a34a" 
-                      strokeWidth="8" 
-                      strokeDasharray={`${82 * 2.83} ${283 - 82 * 2.83}`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold text-slate-900">82%</span>
-                    <span className="text-xs text-slate-500 uppercase">High Potential</span>
-                  </div>
-                </div>
-              </div>
-              <p className="text-sm text-slate-600 text-center">
-                Your project scores high on <span className="font-semibold text-slate-900">Novelty</span> and <span className="font-semibold text-slate-900">Social Impact</span>.
-              </p>
-            </div>
-
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
-                Market Gaps Identified
-              </h4>
-              <div className="space-y-3">
-                {marketGaps.map((gap, index) => (
-                  <div key={index} className="bg-white rounded-xl border border-slate-200 p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-lg">
-                        {gap.icon}
-                      </div>
-                      <div>
-                        <h5 className="text-sm font-semibold text-slate-900">{gap.title}</h5>
-                        <p className="text-xs text-slate-600 mt-1">{gap.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
-                Technical Challenges
-              </h4>
-              <div className="space-y-3">
-                {technicalChallenges.map((challenge, index) => (
-                  <div 
-                    key={index} 
-                    className={`bg-white rounded-xl border-l-4 p-4 ${
-                      challenge.severity === "high" ? "border-l-red-500" : "border-l-amber-500"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <challenge.icon className={`h-4 w-4 ${
-                          challenge.severity === "high" ? "text-red-600" : "text-amber-600"
-                        }`} />
-                        <h5 className={`text-sm font-semibold ${
-                          challenge.severity === "high" ? "text-red-700" : "text-amber-700"
-                        }`}>
-                          {challenge.title}
-                        </h5>
-                      </div>
-                      {challenge.severity === "high" && (
-                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-600">{challenge.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Button className="w-full bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 cursor-pointer">
-              <FileText className="h-4 w-4 mr-2" />
-              Export Research Summary
-            </Button>
-          </aside> */}
-        </div>
-
-        {/* <Footer /> */}
+        <Footer />
       </div>
-    </div>
+      </div>
+      </div>
     </ProtectedRoute>
   );
 }
