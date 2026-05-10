@@ -7,11 +7,18 @@ import { SimpleHeader } from "@/components/navbar";
 import { ProtectedRoute } from "@/components/protected-route";
 import { 
   Brain, Send, Paperclip, Clock, MoreVertical, User, HelpCircle, CheckCircle2, 
-  AlertTriangle, Battery, BarChart3, FileText
+  AlertTriangle, Battery, BarChart3, FileText, Loader2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
-const messages = [
+interface Message {
+  id: number;
+  role: "assistant" | "user";
+  content: string;
+  time: string;
+}
+
+const initialMessages: Message[] = [
   {
     id: 1,
     role: "assistant",
@@ -64,7 +71,96 @@ const technicalChallenges = [
 ];
 
 export default function BrainstormAI() {
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [messageInput, setMessageInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now(),
+      role: "user",
+      content: messageInput.trim(),
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setMessageInput("");
+    setIsLoading(true);
+
+    try {
+      const apiMessages = [...messages, userMessage].map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      const response = await fetch("/api/brainstorm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: apiMessages,
+          projectFocus: "Smart Agriculture Systems",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get response");
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No reader available");
+
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+
+      const assistantMessage: Message = {
+        id: Date.now() + 1,
+        role: "assistant",
+        content: "",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        assistantContent += decoder.decode(value, { stream: true });
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessage.id
+              ? { ...msg, content: assistantContent }
+              : msg
+          )
+        );
+      }
+    } catch (error) {
+      console.error("[BRAINSTEM] Error:", error);
+      const errorMessage: Message = {
+        id: Date.now() + 1,
+        role: "assistant",
+        content: "Sorry, I encountered an error. Please try again.",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
   return (
     <ProtectedRoute>
@@ -131,8 +227,8 @@ export default function BrainstormAI() {
                       <div className="text-sm leading-relaxed whitespace-pre-line">
                         {msg.content.split("\n").map((line, i) => (
                           <p key={i} className={line.startsWith("•") ? "ml-4" : ""}>
-                            {line.replace("•", "○").replace("**", "").split("**").map((part, j) => 
-                              j % 2 === 1 ? <strong key={j}>{part}</strong> : part
+                            {line.replace("•", "○").replace(/\*\*(.*?)\*\*/g, "$1").split(/(\*\*.*?\*\*)/).map((part, j) => 
+                              part.startsWith("**") && part.endsWith("**") ? <strong key={j}>{part.slice(2, -2)}</strong> : part
                             )}
                           </p>
                         ))}
@@ -148,12 +244,31 @@ export default function BrainstormAI() {
                 </div>
               ))}
 
+              {/* Loading Indicator */}
+              {isLoading && (
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center">
+                    <Brain className="h-5 w-5" />
+                  </div>
+                  <div className="max-w-[70%] flex flex-col items-start">
+                    <div className="rounded-2xl px-5 py-4 bg-white border border-slate-200 text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Thinking...</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+
               {/* Suggestion Chips */}
               <div className="flex gap-3 ml-14">
-                <button className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-900 text-sm font-medium hover:bg-blue-100 transition-colors">
+                <button className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-900 text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer">
                   Compare LoRaWAN Gateways
                 </button>
-                <button className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-900 text-sm font-medium hover:bg-blue-100 transition-colors">
+                <button className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-900 text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer">
                   Energy Harvesting Ideas
                 </button>
               </div>
@@ -166,14 +281,19 @@ export default function BrainstormAI() {
                   type="text"
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
+                  onKeyDown={handleKeyPress}
                   placeholder="Type your ideas here..."
                   className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 outline-none"
                 />
-                <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
                   <Paperclip className="h-5 w-5" />
                 </button>
-                <Button className="bg-blue-900 hover:bg-blue-800 text-white rounded-lg">
-                  <Send className="h-4 w-4" />
+                <Button 
+                  onClick={handleSendMessage}
+                  disabled={isLoading || !messageInput.trim()}
+                  className="bg-blue-900 hover:bg-blue-800 text-white rounded-lg cursor-pointer disabled:opacity-50"
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
               <div className="text-center mt-3">
@@ -275,7 +395,7 @@ export default function BrainstormAI() {
             </div>
 
             {/* Export Button */}
-            <Button className="w-full bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200">
+            <Button className="w-full bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 cursor-pointer">
               <FileText className="h-4 w-4 mr-2" />
               Export Research Summary
             </Button>
