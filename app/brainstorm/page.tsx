@@ -313,7 +313,15 @@ export default function BrainstormAI() {
         );
       }
 
-      loadSessions();
+      // Refresh sessions list only (don't reload messages to avoid duplicates)
+      if (supabaseUser) {
+        const { data } = await supabase
+          .from("brainstorm_sessions")
+          .select("id, project_focus, created_at")
+          .eq("user_id", supabaseUser.id)
+          .order("created_at", { ascending: false });
+        setSessions(data || []);
+      }
     } catch (error) {
       console.error("[BRAINSTEM] Error:", error);
       addNotification("error", "AI Error", "Failed to get response. Please try again.");
@@ -490,7 +498,9 @@ export default function BrainstormAI() {
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-hidden flex flex-col">
+              {/* Messages Container */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                   <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
@@ -563,9 +573,10 @@ export default function BrainstormAI() {
                   ))}
                 </div>
               )}
-            </div>
+              </div>
 
-            <div className="border-t border-slate-200 bg-white p-4">
+              {/* Input Area */}
+              <div className="border-t border-slate-200 bg-white p-4 flex-shrink-0">
               <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
                 <input
                   type="text"
@@ -590,8 +601,9 @@ export default function BrainstormAI() {
                 <span className="text-xs text-slate-400 uppercase tracking-wide">
                   Powered by OpenRouter AI • Free Tier
                 </span>
-              </div>
-            </div>
+               </div>
+             </div>
+           </div>
           </div>
 
           <aside className="w-full lg:w-80 bg-slate-50 border-l border-slate-200 p-4 md:p-6 overflow-y-auto max-h-[50vh] lg:max-h-none">
