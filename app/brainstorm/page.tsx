@@ -408,7 +408,7 @@ export default function BrainstormAI() {
             </div>
           </aside>
 
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col overflow-hidden">
             <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -606,7 +606,7 @@ export default function BrainstormAI() {
            </div>
           </div>
 
-          <aside className="w-full lg:w-80 bg-slate-50 border-l border-slate-200 p-4 md:p-6 overflow-y-auto max-h-[50vh] lg:max-h-none">
+          <aside className="w-full lg:w-80 bg-slate-50 border-l border-slate-200 p-4 md:p-6 overflow-y-auto">
             <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-slate-900">Project Feasibility</h3>
