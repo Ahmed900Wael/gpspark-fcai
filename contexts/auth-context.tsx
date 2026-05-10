@@ -123,21 +123,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
-        // Create profile in database
+        // Update profile with additional data (trigger already created the basic profile)
         const { error: profileError } = await supabase
           .from("profiles")
-          .insert({
-            id: data.user.id,
+          .update({
             full_name: profile.fullName || "",
             university_email: profile.universityEmail || email,
             gpa: profile.gpa || "",
             academic_year: profile.academicYear || "",
             interests: profile.interests || [],
             career_goals: profile.careerGoals || "",
-          });
+          })
+          .eq("id", data.user.id);
 
         if (profileError) {
-          console.error("[SERVER] Profile creation error:", profileError.message);
+          console.error("[SERVER] Profile update error:", profileError.message);
           return { error: profileError.message };
         }
 
