@@ -25,7 +25,7 @@ export function Footer() {
           </div>
           
           <div className="text-center md:text-right">
-            <span className="text-xs text-slate-500">© {currentYear} GPSpark FCAI-CU {currentYear}. All rights reserved.</span>
+            <span className="text-xs text-slate-500">© {currentYear} GPSpark FCAI-CU. All rights reserved.</span>
           </div>
         </div>
       </div>

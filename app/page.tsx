@@ -261,7 +261,7 @@ export default function Home() {
             </div>
             
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-500">© {currentYear} GPSpark FCAI-CU 2026. All rights reserved.</span>
+              <span className="text-sm text-slate-500">© {currentYear} GPSpark FCAI-CU. All rights reserved.</span>
             </div>
           </div>
         </div>
