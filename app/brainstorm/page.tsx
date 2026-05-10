@@ -250,6 +250,35 @@ export default function BrainstormAI() {
     const messageText = content || messageInput;
     if (!messageText.trim() || isLoading || !supabaseUser) return;
 
+    // Create a session first if none exists
+    let activeSessionId = currentSessionId;
+    if (!activeSessionId) {
+      const { data, error } = await supabase
+        .from("brainstorm_sessions")
+        .insert({
+          user_id: supabaseUser.id,
+          project_focus: "Graduation Project Brainstorming",
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("[CLIENT] Error creating session:", error);
+        return;
+      }
+
+      activeSessionId = data.id;
+      setCurrentSessionId(activeSessionId);
+      
+      // Refresh sessions list
+      const { data: sessionsData } = await supabase
+        .from("brainstorm_sessions")
+        .select("id, project_focus, created_at")
+        .eq("user_id", supabaseUser.id)
+        .order("created_at", { ascending: false });
+      setSessions(sessionsData || []);
+    }
+
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -273,7 +302,7 @@ export default function BrainstormAI() {
         body: JSON.stringify({
           messages: apiMessages,
           projectFocus: "Graduation Project Brainstorming",
-          sessionId: currentSessionId,
+          sessionId: activeSessionId,
           userId: supabaseUser.id,
           userProfile,
         }),
@@ -311,16 +340,6 @@ export default function BrainstormAI() {
               : msg
           )
         );
-      }
-
-      // Refresh sessions list only (don't reload messages to avoid duplicates)
-      if (supabaseUser) {
-        const { data } = await supabase
-          .from("brainstorm_sessions")
-          .select("id, project_focus, created_at")
-          .eq("user_id", supabaseUser.id)
-          .order("created_at", { ascending: false });
-        setSessions(data || []);
       }
     } catch (error) {
       console.error("[BRAINSTEM] Error:", error);
