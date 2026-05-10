@@ -6,9 +6,12 @@ import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { ProtectedRoute } from "@/components/protected-route";
 import { Footer } from "@/components/footer";
+import { useAuth } from "@/contexts/auth-context";
+import { useNotification } from "@/contexts/notification-context";
+import { supabase } from "@/lib/supabase";
 import { 
-  Brain, Send, Paperclip, Clock, MoreVertical, User, HelpCircle, CheckCircle2, 
-  AlertTriangle, Battery, BarChart3, FileText, Loader2
+  Brain, Send, Paperclip, MoreVertical, User, 
+  AlertTriangle, Battery, BarChart3, FileText, Loader2, Plus, MessageSquare, Trash2
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
@@ -19,29 +22,11 @@ interface Message {
   time: string;
 }
 
-const initialMessages: Message[] = [
-  {
-    id: 1,
-    role: "assistant",
-    content: `Hello! I'm your AI tutor. I've analyzed your initial proposal for the **Smart Agriculture** project. It's a robust direction. To help narrow our scope, are you leaning more towards large-scale industrial optimization or small-scale urban farming accessibility?`,
-    time: "10:42 AM",
-  },
-  {
-    id: 2,
-    role: "user",
-    content: `I'm interested in small-scale accessibility. I want to build a system that local urban farmers can afford, likely using low-power wide-area networks (LPWAN) to cover community garden plots without high infrastructure costs.`,
-    time: "10:45 AM",
-  },
-  {
-    id: 3,
-    role: "assistant",
-    content: `That is a high-impact niche. By focusing on **LoRaWAN**, we can address the primary barrier for urban community gardens: cost and existing Wi-Fi range limitations. Here's how we might structure the research:
-
-• Cost-benefit analysis of ESP32 vs. dedicated LoRa chips.
-• Data mesh protocols for high-density urban environments.`,
-    time: "10:47 AM",
-  },
-];
+interface BrainstormSession {
+  id: string;
+  project_focus: string;
+  created_at: string;
+}
 
 const marketGaps = [
   {
@@ -72,17 +57,103 @@ const technicalChallenges = [
 ];
 
 export default function BrainstormAI() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const { user, supabaseUser } = useAuth();
+  const { addNotification } = useNotification();
+  const [messages, setMessages] = useState<Message[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessions, setSessions] = useState<BrainstormSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    if (supabaseUser) {
+      loadSessions();
+    }
+  }, [supabaseUser]);
+
+  const loadSessions = async () => {
+    if (!supabaseUser) return;
+    const { data, error } = await supabase
+      .from("brainstorm_sessions")
+      .select("id, project_focus, created_at")
+      .eq("user_id", supabaseUser.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("[CLIENT] Error loading sessions:", error);
+      return;
+    }
+
+    setSessions(data || []);
+    if (data && data.length > 0) {
+      setCurrentSessionId(data[0].id);
+      loadMessages(data[0].id);
+    }
+  };
+
+  const loadMessages = async (sessionId: string) => {
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("timestamp", { ascending: true });
+
+    if (error) {
+      console.error("[CLIENT] Error loading messages:", error);
+      return;
+    }
+
+    const formattedMessages: Message[] = (data || []).map((msg) => ({
+      id: new Date(msg.timestamp).getTime(),
+      role: msg.role as "assistant" | "user",
+      content: msg.content,
+      time: new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    }));
+
+    setMessages(formattedMessages);
+  };
+
+  const createNewSession = async () => {
+    if (!supabaseUser) return;
+    setCurrentSessionId(null);
+    setMessages([]);
+    setShowSidebar(false);
+  };
+
+  const switchSession = (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    loadMessages(sessionId);
+    setShowSidebar(false);
+  };
+
+  const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const { error } = await supabase
+      .from("brainstorm_sessions")
+      .delete()
+      .eq("id", sessionId);
+
+    if (error) {
+      console.error("[CLIENT] Error deleting session:", error);
+      return;
+    }
+
+    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    if (currentSessionId === sessionId) {
+      setCurrentSessionId(null);
+      setMessages([]);
+    }
+    addNotification("success", "Session Deleted", "The brainstorm session has been removed.");
+  };
+
   const handleSendMessage = async () => {
-    if (!messageInput.trim() || isLoading) return;
+    if (!messageInput.trim() || isLoading || !supabaseUser) return;
 
     const userMessage: Message = {
       id: Date.now(),
@@ -107,6 +178,8 @@ export default function BrainstormAI() {
         body: JSON.stringify({
           messages: apiMessages,
           projectFocus: "Smart Agriculture Systems",
+          sessionId: currentSessionId,
+          userId: supabaseUser.id,
         }),
       });
 
@@ -142,8 +215,12 @@ export default function BrainstormAI() {
           )
         );
       }
+
+      // Reload sessions to get the new one
+      loadSessions();
     } catch (error) {
       console.error("[BRAINSTEM] Error:", error);
+      addNotification("error", "AI Error", "Failed to get response. Please try again.");
       const errorMessage: Message = {
         id: Date.now() + 1,
         role: "assistant",
@@ -177,26 +254,95 @@ export default function BrainstormAI() {
 
         {/* Chat Area */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          {/* Session Sidebar (Desktop) */}
+          <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200 bg-white">
+            <div className="p-4 border-b border-slate-200">
+              <Button
+                onClick={createNewSession}
+                className="w-full bg-blue-900 hover:bg-blue-800 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Session
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {sessions.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageSquare className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">No sessions yet</p>
+                  <p className="text-xs text-slate-400 mt-1">Start a new conversation</p>
+                </div>
+              ) : (
+                sessions.map((session) => (
+                  <div
+                    key={session.id}
+                    onClick={() => switchSession(session.id)}
+                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                      currentSessionId === session.id
+                        ? "bg-blue-50 border border-blue-200"
+                        : "bg-slate-50 hover:bg-slate-100"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">
+                        {session.project_focus}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(session.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => deleteSession(session.id, e)}
+                      className="p-1 text-slate-400 hover:text-red-500 ml-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </aside>
+
           <div className="flex-1 flex flex-col">
             {/* Chat Header */}
             <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-white">
               <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
-                      Active
-                    </span>
-                  </div>
-                  <h1 className="text-xl md:text-2xl font-bold text-slate-900">Brainstorming Session</h1>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="text-sm text-slate-600">Project Focus: Smart Agriculture Systems</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowSidebar(!showSidebar)}
+                    className="lg:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-600"
+                  >
+                    <MessageSquare className="h-5 w-5" />
+                  </button>
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
+                        Powered by OpenRouter
+                      </span>
+                    </div>
+                    <h1 className="text-xl md:text-2xl font-bold text-slate-900">
+                      {currentSessionId ? "Brainstorming Session" : "New Session"}
+                    </h1>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-sm text-slate-600">
+                        {currentSessionId 
+                          ? `Session active` 
+                          : "Start a new conversation or select one"
+                        }
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-600">
-                    <Clock className="h-5 w-5" />
-                  </button>
+                  <Button
+                    onClick={createNewSession}
+                    variant="outline"
+                    className="border-slate-200 text-sm hidden sm:flex"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Session
+                  </Button>
                   <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-600">
                     <MoreVertical className="h-5 w-5" />
                   </button>
@@ -204,8 +350,62 @@ export default function BrainstormAI() {
               </div>
             </div>
 
+            {/* Session Sidebar (Mobile) */}
+            {showSidebar && (
+              <div className="lg:hidden border-b border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-slate-900">Sessions</h3>
+                  <Button onClick={createNewSession} variant="outline" className="text-xs">
+                    <Plus className="h-3 w-3 mr-1" />
+                    New
+                  </Button>
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {sessions.length === 0 ? (
+                    <p className="text-sm text-slate-500 text-center py-4">No sessions yet</p>
+                  ) : (
+                    sessions.map((session) => (
+                      <div
+                        key={session.id}
+                        onClick={() => switchSession(session.id)}
+                        className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                          currentSessionId === session.id
+                            ? "bg-blue-50 border border-blue-200"
+                            : "bg-slate-50 hover:bg-slate-100"
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {session.project_focus}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {new Date(session.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => deleteSession(session.id, e)}
+                          className="p-1 text-slate-400 hover:text-red-500"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {messages.length === 0 && !isLoading && (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <Brain className="h-16 w-16 text-blue-200 mb-4" />
+                  <h2 className="text-xl font-semibold text-slate-900 mb-2">Start a New Brainstorm</h2>
+                  <p className="text-slate-500 max-w-md">
+                    Ask me about your project idea, technical challenges, market analysis, or anything related to your graduation project.
+                  </p>
+                </div>
+              )}
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                   <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
@@ -299,7 +499,7 @@ export default function BrainstormAI() {
               </div>
               <div className="text-center mt-3">
                 <span className="text-xs text-slate-400 uppercase tracking-wide">
-                  Powered by GPSpark Scholastic Engine v2.4
+                  Powered by OpenRouter AI • Free Tier
                 </span>
               </div>
             </div>

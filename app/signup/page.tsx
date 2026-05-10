@@ -52,7 +52,7 @@ export default function SignUp() {
       console.log("[CLIENT] Sign up successful, waiting for session sync...");
       addNotification("success", "Welcome to GPSpark!", "Your account has been created. Complete your profile to get started.");
       await new Promise(resolve => setTimeout(resolve, 500));
-      router.push("/dashboard");
+      router.push("/profile");
     }
   };
 
