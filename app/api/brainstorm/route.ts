@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabaseAdmin = SUPABASE_URL && SUPABASE_SERVICE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+  : null;
 
-const SYSTEM_PROMPT = `You are GPSpark AI, an expert academic tutor specializing in graduation projects for FCAI-CU students. Your role is to:
+function buildSystemPrompt(userProfile: any, projectFocus?: string) {
+  let prompt = `You are GPSpark AI, an expert academic tutor specializing in graduation projects for FCAI-CU students. Your role is to:
 
 1. Help students brainstorm and refine their project ideas
 2. Analyze project feasibility and identify market gaps
@@ -19,20 +22,40 @@ Always be encouraging, academic-focused, and provide structured, actionable advi
 
 Keep responses concise but thorough. Use bullet points and numbered lists when appropriate.`;
 
+  if (userProfile) {
+    const { fullName, academicYear, interests, careerGoals, gpa } = userProfile;
+    prompt += `\n\nHere is the student's profile to personalize your guidance:`;
+    if (fullName) prompt += `\n- Name: ${fullName}`;
+    if (academicYear) prompt += `\n- Academic Year: ${academicYear}`;
+    if (interests && interests.length > 0) prompt += `\n- Interests: ${interests.join(", ")}`;
+    if (careerGoals) prompt += `\n- Career Goals: ${careerGoals}`;
+    if (gpa) prompt += `\n- GPA: ${gpa}`;
+    prompt += `\n\nTailor your suggestions to match their interests, academic level, and goals.`;
+  }
+
+  if (projectFocus) {
+    prompt += `\n\nCurrent project focus: ${projectFocus}`;
+  }
+
+  return prompt;
+}
+
 export async function POST(request: Request) {
   try {
-    const { messages, projectFocus, sessionId, userId } = await request.json();
+    const { messages, projectFocus, sessionId, userId, userProfile } = await request.json();
+
+    console.log("[BRAINSTEM_API] Request received. OpenRouter key configured:", !!OPENROUTER_API_KEY);
+    console.log("[BRAINSTEM_API] Supabase admin configured:", !!supabaseAdmin);
 
     if (!OPENROUTER_API_KEY) {
+      console.error("[BRAINSTEM_API] OPENROUTER_API_KEY is missing");
       return NextResponse.json(
         { error: "OpenRouter API key not configured" },
         { status: 500 }
       );
     }
 
-    const systemMessage = projectFocus
-      ? `${SYSTEM_PROMPT}\n\nCurrent project focus: ${projectFocus}`
-      : SYSTEM_PROMPT;
+    const systemMessage = buildSystemPrompt(userProfile, projectFocus);
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -43,7 +66,7 @@ export async function POST(request: Request) {
         "X-Title": "GPSpark",
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        model: "ring-2.6-1t:free",
         messages: [
           { role: "system", content: systemMessage },
           ...messages.map((msg: { role: string; content: string }) => ({
@@ -58,10 +81,11 @@ export async function POST(request: Request) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.error("[BRAINSTEM_API] OpenRouter error:", errorData);
+      const errorText = await response.text();
+      console.error("[BRAINSTEM_API] OpenRouter error status:", response.status);
+      console.error("[BRAINSTEM_API] OpenRouter error body:", errorText);
       return NextResponse.json(
-        { error: "Failed to get AI response" },
+        { error: `OpenRouter API error (${response.status}): ${errorText.slice(0, 200)}` },
         { status: response.status }
       );
     }
@@ -107,9 +131,8 @@ export async function POST(request: Request) {
           }
 
           // Save to database after stream completes
-          if (userId && fullContent) {
+          if (supabaseAdmin && userId && fullContent) {
             if (!currentSessionId) {
-              // Create new session
               const { data: sessionData, error: sessionError } = await supabaseAdmin
                 .from("brainstorm_sessions")
                 .insert({
@@ -127,7 +150,6 @@ export async function POST(request: Request) {
             }
 
             if (currentSessionId) {
-              // Save user messages
               for (const msg of messages) {
                 if (msg.role === "user") {
                   await supabaseAdmin
@@ -140,7 +162,6 @@ export async function POST(request: Request) {
                 }
               }
 
-              // Save assistant response
               await supabaseAdmin
                 .from("chat_messages")
                 .insert({

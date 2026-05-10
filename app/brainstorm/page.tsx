@@ -11,9 +11,9 @@ import { useNotification } from "@/contexts/notification-context";
 import { supabase } from "@/lib/supabase";
 import { 
   Brain, Send, Paperclip, MoreVertical, User, 
-  AlertTriangle, Battery, BarChart3, FileText, Loader2, Plus, MessageSquare, Trash2
+  AlertTriangle, Battery, BarChart3, FileText, Loader2, Plus, MessageSquare, Trash2, Sparkles
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface Message {
   id: number;
@@ -56,6 +56,56 @@ const technicalChallenges = [
   },
 ];
 
+const SUGGESTION_PHASES = {
+  welcome: [
+    "I have a project idea in mind",
+    "Help me find a project idea",
+    "What's trending in tech?",
+    "Analyze my project feasibility",
+  ],
+  exploring: [
+    "What tech stack should I use?",
+    "How do I validate this idea?",
+    "Who are the competitors?",
+    "What are the technical challenges?",
+  ],
+  deepening: [
+    "Suggest an architecture",
+    "How should I structure the database?",
+    "What APIs should I integrate?",
+    "How do I make it scalable?",
+  ],
+  refining: [
+    "How do I present this to my supervisor?",
+    "What should my milestones be?",
+    "How do I document this?",
+    "What are the next steps?",
+  ],
+};
+
+function getSuggestions(messageCount: number, lastMessageRole: string, userInterests: string[]): string[] {
+  let phase: keyof typeof SUGGESTION_PHASES;
+  
+  if (messageCount <= 2) {
+    phase = "exploring";
+  } else if (messageCount <= 6) {
+    phase = "deepening";
+  } else {
+    phase = "refining";
+  }
+
+  let suggestions = [...SUGGESTION_PHASES[phase]];
+
+  if (userInterests.length > 0 && phase === "exploring") {
+    suggestions = [
+      `Project ideas in ${userInterests[0]}`,
+      ...suggestions.slice(0, 3),
+    ];
+  }
+
+  return suggestions.slice(0, 4);
+}
+
 export default function BrainstormAI() {
   const { user, supabaseUser } = useAuth();
   const { addNotification } = useNotification();
@@ -65,7 +115,16 @@ export default function BrainstormAI() {
   const [sessions, setSessions] = useState<BrainstormSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [hasWelcomed, setHasWelcomed] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const userProfile = user ? {
+    fullName: user.fullName,
+    academicYear: user.academicYear,
+    interests: user.interests,
+    careerGoals: user.careerGoals,
+    gpa: user.gpa,
+  } : null;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -94,6 +153,8 @@ export default function BrainstormAI() {
     if (data && data.length > 0) {
       setCurrentSessionId(data[0].id);
       loadMessages(data[0].id);
+    } else {
+      sendWelcomeMessage();
     }
   };
 
@@ -117,13 +178,42 @@ export default function BrainstormAI() {
     }));
 
     setMessages(formattedMessages);
+    setHasWelcomed(formattedMessages.length > 0);
   };
+
+  const sendWelcomeMessage = useCallback(async () => {
+    if (!supabaseUser || hasWelcomed) return;
+    
+    setIsLoading(true);
+    setHasWelcomed(true);
+
+    try {
+      const welcomePrompt = userProfile 
+        ? `Welcome ${userProfile.fullName}! I see you're a ${userProfile.academicYear || "student"} interested in ${userProfile.interests?.join(", ") || "various fields"}. Let's brainstorm your graduation project. What's on your mind?`
+        : "Welcome! I'm your GPSpark AI tutor. I'm here to help you brainstorm, refine, and plan your graduation project. What would you like to work on today?";
+
+      const welcomeMessage: Message = {
+        id: Date.now(),
+        role: "assistant",
+        content: welcomePrompt,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setMessages([welcomeMessage]);
+    } catch (error) {
+      console.error("[CLIENT] Welcome message error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [supabaseUser, hasWelcomed, userProfile]);
 
   const createNewSession = async () => {
     if (!supabaseUser) return;
     setCurrentSessionId(null);
     setMessages([]);
+    setHasWelcomed(false);
     setShowSidebar(false);
+    setTimeout(() => sendWelcomeMessage(), 100);
   };
 
   const switchSession = (sessionId: string) => {
@@ -148,17 +238,20 @@ export default function BrainstormAI() {
     if (currentSessionId === sessionId) {
       setCurrentSessionId(null);
       setMessages([]);
+      setHasWelcomed(false);
+      setTimeout(() => sendWelcomeMessage(), 100);
     }
     addNotification("success", "Session Deleted", "The brainstorm session has been removed.");
   };
 
-  const handleSendMessage = async () => {
-    if (!messageInput.trim() || isLoading || !supabaseUser) return;
+  const handleSendMessage = async (content?: string) => {
+    const messageText = content || messageInput;
+    if (!messageText.trim() || isLoading || !supabaseUser) return;
 
     const userMessage: Message = {
       id: Date.now(),
       role: "user",
-      content: messageInput.trim(),
+      content: messageText.trim(),
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -177,14 +270,16 @@ export default function BrainstormAI() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: apiMessages,
-          projectFocus: "Smart Agriculture Systems",
+          projectFocus: "Graduation Project Brainstorming",
           sessionId: currentSessionId,
           userId: supabaseUser.id,
+          userProfile,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to get response");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `Server error (${response.status})`);
       }
 
       const reader = response.body?.getReader();
@@ -216,7 +311,6 @@ export default function BrainstormAI() {
         );
       }
 
-      // Reload sessions to get the new one
       loadSessions();
     } catch (error) {
       console.error("[BRAINSTEM] Error:", error);
@@ -240,21 +334,22 @@ export default function BrainstormAI() {
     }
   };
 
+  const lastMessage = messages[messages.length - 1];
+  const suggestions = getSuggestions(
+    messages.length,
+    lastMessage?.role || "assistant",
+    user?.interests || []
+  );
+
   return (
     <ProtectedRoute>
     <div className="min-h-screen bg-slate-50">
-      {/* Sidebar - Responsive */}
       <Sidebar activePage="/brainstorm" />
 
-      {/* Main Content */}
       <div className="lg:ml-64 flex flex-col min-h-screen">
-
-        {/* Top Navigation */}
         <SimpleHeader />
 
-        {/* Chat Area */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          {/* Session Sidebar (Desktop) */}
           <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200 bg-white">
             <div className="p-4 border-b border-slate-200">
               <Button
@@ -304,7 +399,6 @@ export default function BrainstormAI() {
           </aside>
 
           <div className="flex-1 flex flex-col">
-            {/* Chat Header */}
             <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -350,7 +444,6 @@ export default function BrainstormAI() {
               </div>
             </div>
 
-            {/* Session Sidebar (Mobile) */}
             {showSidebar && (
               <div className="lg:hidden border-b border-slate-200 bg-white p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -395,17 +488,7 @@ export default function BrainstormAI() {
               </div>
             )}
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {messages.length === 0 && !isLoading && (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <Brain className="h-16 w-16 text-blue-200 mb-4" />
-                  <h2 className="text-xl font-semibold text-slate-900 mb-2">Start a New Brainstorm</h2>
-                  <p className="text-slate-500 max-w-md">
-                    Ask me about your project idea, technical challenges, market analysis, or anything related to your graduation project.
-                  </p>
-                </div>
-              )}
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                   <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
@@ -445,7 +528,6 @@ export default function BrainstormAI() {
                 </div>
               ))}
 
-              {/* Loading Indicator */}
               {isLoading && (
                 <div className="flex gap-4">
                   <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center">
@@ -464,18 +546,23 @@ export default function BrainstormAI() {
 
               <div ref={messagesEndRef} />
 
-              {/* Suggestion Chips */}
-              <div className="flex gap-3 ml-14">
-                <button className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-900 text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer">
-                  Compare LoRaWAN Gateways
-                </button>
-                <button className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-900 text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer">
-                  Energy Harvesting Ideas
-                </button>
-              </div>
+              {/* Context-Aware Suggestion Chips */}
+              {!isLoading && messages.length > 0 && (
+                <div className="flex flex-wrap gap-3 ml-14">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSendMessage(suggestion)}
+                      className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-900 text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer flex items-center gap-2"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Input Area */}
             <div className="border-t border-slate-200 bg-white p-4">
               <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
                 <input
@@ -490,7 +577,7 @@ export default function BrainstormAI() {
                   <Paperclip className="h-5 w-5" />
                 </button>
                 <Button 
-                  onClick={handleSendMessage}
+                  onClick={() => handleSendMessage()}
                   disabled={isLoading || !messageInput.trim()}
                   className="bg-blue-900 hover:bg-blue-800 text-white rounded-lg cursor-pointer disabled:opacity-50"
                 >
@@ -505,9 +592,7 @@ export default function BrainstormAI() {
             </div>
           </div>
 
-          {/* Right Sidebar */}
           <aside className="w-full lg:w-80 bg-slate-50 border-l border-slate-200 p-4 md:p-6 overflow-y-auto max-h-[50vh] lg:max-h-none">
-            {/* Project Feasibility */}
             <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-slate-900">Project Feasibility</h3>
@@ -539,7 +624,6 @@ export default function BrainstormAI() {
               </p>
             </div>
 
-            {/* Market Gaps */}
             <div className="mb-6">
               <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
                 Market Gaps Identified
@@ -561,7 +645,6 @@ export default function BrainstormAI() {
               </div>
             </div>
 
-            {/* Technical Challenges */}
             <div className="mb-6">
               <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
                 Technical Challenges
@@ -595,7 +678,6 @@ export default function BrainstormAI() {
               </div>
             </div>
 
-            {/* Export Button */}
             <Button className="w-full bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 cursor-pointer">
               <FileText className="h-4 w-4 mr-2" />
               Export Research Summary
