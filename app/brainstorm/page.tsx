@@ -386,6 +386,13 @@ export default function BrainstormAI() {
     user?.interests || []
   );
 
+  // Calculate feasibility score based on conversation progress
+  const feasibilityScore = Math.min(95, 20 + (messages.length * 8));
+  const feasibilityColor = feasibilityScore >= 70 ? "#16a34a" : feasibilityScore >= 40 ? "#f59e0b" : "#dc2626";
+  const feasibilityLabel = feasibilityScore >= 70 ? "High Potential" : feasibilityScore >= 40 ? "Moderate" : "Needs Work";
+  const circumference = 2 * Math.PI * 45;
+  const strokeDashoffset = circumference - (feasibilityScore / 100) * circumference;
+
   return (
     <ProtectedRoute>
       <div className="h-screen bg-slate-50 overflow-hidden">
@@ -660,20 +667,27 @@ export default function BrainstormAI() {
                       cy="50" 
                       r="45" 
                       fill="none" 
-                      stroke="#16a34a" 
+                      stroke={feasibilityColor}
                       strokeWidth="8" 
-                      strokeDasharray={`${82 * 2.83} ${283 - 82 * 2.83}`}
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
                       strokeLinecap="round"
+                      className="transition-all duration-500 ease-out"
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold text-slate-900">82%</span>
-                    <span className="text-xs text-slate-500 uppercase">High Potential</span>
+                    <span className="text-3xl font-bold text-slate-900">{feasibilityScore}%</span>
+                    <span className="text-xs text-slate-500 uppercase">{feasibilityLabel}</span>
                   </div>
                 </div>
               </div>
               <p className="text-sm text-slate-600 text-center">
-                Your project scores high on <span className="font-semibold text-slate-900">Novelty</span> and <span className="font-semibold text-slate-900">Social Impact</span>.
+                {feasibilityScore >= 70 
+                  ? "Your project scores high on novelty and social impact."
+                  : feasibilityScore >= 40
+                  ? "Keep refining your idea to improve feasibility."
+                  : "Share more details to get a better assessment."
+                }
               </p>
             </div>
 
