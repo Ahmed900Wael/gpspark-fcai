@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
+import { ProtectedRoute } from "@/components/protected-route";
+import { useAuth } from "@/contexts/auth-context";
 import { 
   TrendingUp, Clock, Target, Award, Brain, Users, Library, Flag
 } from "lucide-react";
@@ -28,7 +30,10 @@ const upcomingMilestones = [
 ];
 
 export default function Dashboard() {
+  const { user, logout } = useAuth();
+
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-slate-50">
       {/* Sidebar - Responsive */}
       <Sidebar activePage="/dashboard" />
@@ -46,8 +51,9 @@ export default function Dashboard() {
               <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
                 In Progress
               </span>
+              <span className="text-sm text-slate-500">Welcome, {user?.fullName || "Student"}!</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Welcome back, John!</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Your Dashboard</h1>
             <p className="text-slate-600 mt-1">Here's what's happening with your project today.</p>
           </div>
 
@@ -177,5 +183,6 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
+import { ProtectedRoute } from "@/components/protected-route";
 import { 
   Brain, Send, Paperclip, Clock, MoreVertical, User, HelpCircle, CheckCircle2, 
   AlertTriangle, Battery, BarChart3, FileText
@@ -66,6 +67,7 @@ export default function BrainstormAI() {
   const [messageInput, setMessageInput] = useState("");
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-slate-50">
       {/* Sidebar - Responsive */}
       <Sidebar activePage="/brainstorm" />
@@ -281,5 +283,6 @@ export default function BrainstormAI() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

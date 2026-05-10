@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
+import { ProtectedRoute } from "@/components/protected-route";
 import { 
   Search, Filter, User, Users, MessageSquare, Lightbulb
 } from "lucide-react";
@@ -77,6 +78,7 @@ export default function TeamFormation() {
   };
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-slate-50">
       {/* Sidebar - Responsive */}
       <Sidebar activePage="/team" />
@@ -267,5 +269,6 @@ export default function TeamFormation() {
         </footer>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

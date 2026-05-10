@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
+import { ProtectedRoute } from "@/components/protected-route";
 import { 
   GraduationCap, Search, Star, Calendar, MessageSquare, 
   CheckCircle2, Clock, Filter, ChevronDown, Mail
@@ -95,6 +96,7 @@ export default function Mentors() {
   const [selectedExpertise, setSelectedExpertise] = useState("All Expertise");
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-slate-50">
       {/* Sidebar - Responsive */}
       <Sidebar activePage="/mentors" />
@@ -296,5 +298,6 @@ export default function Mentors() {
         </footer>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

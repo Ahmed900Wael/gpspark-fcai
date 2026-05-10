@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
+import { ProtectedRoute } from "@/components/protected-route";
 import { 
   Search, Filter, Calendar, Star, ArrowRight, Lightbulb,
   User, ChevronDown
@@ -58,6 +59,7 @@ export default function GPLibrary() {
   const [activeTab, setActiveTab] = useState("all");
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-slate-50">
       {/* Sidebar - Responsive */}
       <Sidebar activePage="/library" />
@@ -270,5 +272,6 @@ export default function GPLibrary() {
         </footer>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
+import { ProtectedRoute } from "@/components/protected-route";
 import { 
   Share2, CheckCircle2, Circle, Clock, MessageSquare, 
   FileText, ChevronRight, Download, HelpCircle
@@ -49,6 +50,7 @@ const nextPhaseTasks = [
 
 export default function Milestones() {
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-slate-50">
       {/* Sidebar - Responsive */}
       <Sidebar activePage="/milestones" />
@@ -323,5 +325,6 @@ export default function Milestones() {
         </footer>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
