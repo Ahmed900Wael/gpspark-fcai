@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Brain, BarChart3, Users, MessageSquare, Shield, TrendingUp, Library, Bell, User, Search } from "lucide-react";
+import { ArrowRight, Brain, BarChart3, Users, MessageSquare, Shield, TrendingUp, Library, Search } from "lucide-react";
+
+const currentYear = new Date().getFullYear();
 
 export default function Home() {
   return (
@@ -174,9 +176,11 @@ export default function Home() {
               <p className="text-blue-100 mb-6">
                 Browse thousands of successful capstone projects from alumni across top universities.
               </p>
-              <Button className="bg-white text-blue-900 hover:bg-blue-50">
-                Search Library
-              </Button>
+              <Link href="/library">
+                <Button className="bg-white text-blue-900 hover:bg-blue-50">
+                  Search Library
+                </Button>
+              </Link>
             </div>
           </div>
           
@@ -200,7 +204,7 @@ export default function Home() {
             <div className="bg-green-50 rounded-2xl p-6 flex flex-col justify-between col-span-2">
               <div>
                 <TrendingUp className="h-6 w-6 text-green-600 mb-3" />
-                <h4 className="font-semibold text-slate-900 mb-1">Industry Trends 2024</h4>
+                <h4 className="font-semibold text-slate-900 mb-1">Industry Trends {currentYear}</h4>
                 <p className="text-sm text-slate-600">Stay updated with latest market demands.</p>
               </div>
             </div>
@@ -222,10 +226,12 @@ export default function Home() {
               Join GPSpark today and turn your academic requirements into your first career milestone.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Button className="bg-amber-400 text-blue-900 hover:bg-amber-300 px-8 py-5 text-base font-semibold">
-                Create Free Account
-              </Button>
-              <Button variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-5 text-base">
+              <Link href="/onboarding">
+                <Button className="bg-amber-400 text-blue-900 hover:bg-amber-300 px-8 py-5 text-base font-semibold">
+                  Create Free Account
+                </Button>
+              </Link>
+              <Button variant="outline" className="border-white text-slate-900 hover:bg-white hover:text-white px-8 py-5 text-base">
                 Talk to an Advisor
               </Button>
             </div>
@@ -241,19 +247,19 @@ export default function Home() {
               <img src="/logo.svg" alt="GPSpark Logo" className="w-8 h-8" />
               <div>
                 <span className="text-lg font-bold text-slate-900">GPSpark</span>
-                <span className="text-slate-500 text-sm ml-2">FCAI</span>
+                <span className="text-slate-500 text-sm ml-2">FCAI-CU 2026</span>
               </div>
             </div>
             
             <div className="flex gap-6 text-sm text-slate-600">
               <Link href="/about" className="hover:text-slate-900">About</Link>
-              <Link href="/methodology" className="hover:text-slate-900">Methodology</Link>
               <Link href="/privacy" className="hover:text-slate-900">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-slate-900">Terms and Conditions</Link>
               <Link href="/support" className="hover:text-slate-900">Contact Support</Link>
             </div>
             
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-500">© 2024 GPSpark FCAI. All rights reserved.</span>
+              <span className="text-sm text-slate-500">© {currentYear} GPSpark FCAI-CU 2026. All rights reserved.</span>
             </div>
           </div>
         </div>
