@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/auth-context";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, 
-  HelpCircle, Plus, Menu, X
+  HelpCircle, Plus, Menu, X, User, LogOut
 } from "lucide-react";
 
 interface SidebarProps {
@@ -14,6 +15,7 @@ interface SidebarProps {
 
 export function Sidebar({ activePage }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -23,6 +25,12 @@ export function Sidebar({ activePage }: SidebarProps) {
     { label: "GP Library", href: "/library", icon: Library },
     { label: "Team Search", href: "/team", icon: Users },
   ];
+
+  const handleLogout = async () => {
+    console.log("[CLIENT] User logging out from sidebar");
+    await signOut();
+    setIsOpen(false);
+  };
 
   return (
     <>
@@ -83,6 +91,18 @@ export function Sidebar({ activePage }: SidebarProps) {
             <Plus className="h-4 w-4 mr-2" />
             New Project
           </Button>
+          <Link
+            href="/profile"
+            onClick={() => setIsOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              activePage === "/profile"
+                ? "bg-blue-50 text-blue-900"
+                : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <User className="h-5 w-5" />
+            <span className="text-sm font-medium">My Profile</span>
+          </Link>
           <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
             <Settings className="h-5 w-5" />
             <span className="text-sm font-medium">Settings</span>
@@ -91,6 +111,13 @@ export function Sidebar({ activePage }: SidebarProps) {
             <HelpCircle className="h-5 w-5" />
             <span className="text-sm font-medium">Support</span>
           </Link>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full"
+          >
+            <LogOut className="h-5 w-5" />
+            <span className="text-sm font-medium">Logout</span>
+          </button>
         </div>
       </aside>
     </>

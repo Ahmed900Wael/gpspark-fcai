@@ -1,96 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/auth-context";
-import { ArrowRight, ArrowLeft, Check, Brain, Globe, Shield, Lock, HelpCircle } from "lucide-react";
+import { ArrowRight, Check, Brain, Globe, Shield, Lock, HelpCircle } from "lucide-react";
 
 const steps = [
-  { number: 1, title: "Account Identity", status: "current" },
-  { number: 2, title: "Academic Profile", status: "pending" },
-  { number: 3, title: "Interests & Goals", status: "pending" },
-];
-
-const interestOptions = [
-  { id: "ai-ml", label: "AI & ML", icon: Brain },
-  { id: "web-dev", label: "Web Dev", icon: Globe },
-  { id: "cybersecurity", label: "Cybersecurity", icon: Shield },
-  { id: "mobile", label: "Mobile Apps", icon: "📱" },
-  { id: "big-data", label: "Big Data", icon: "📊" },
-  { id: "cloud", label: "Cloud Systems", icon: "☁️" },
+  { number: 1, title: "Create Account", status: "current" },
+  { number: 2, title: "Complete Profile", status: "pending" },
+  { number: 3, title: "Start Building", status: "pending" },
 ];
 
 export default function Onboarding() {
-  const router = useRouter();
-  const { login } = useAuth();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
-    fullName: "",
-    universityEmail: "",
-    gpa: "",
-    academicYear: "Senior (Capstone Ready)",
-    interests: [] as string[],
-    careerGoals: "",
-  });
-
-  const updateStepStatus = () => {
-    return steps.map((step) => ({
-      ...step,
-      status: step.number < currentStep ? "completed" : step.number === currentStep ? "current" : "pending",
-    }));
-  };
-
-  const updatedSteps = updateStepStatus();
-
-  const handleNext = () => {
-    if (currentStep < 3) {
-      console.log(`[CLIENT] Step ${currentStep} completed:`, formData);
-      setCurrentStep(currentStep + 1);
-    } else {
-      console.log("[CLIENT] Onboarding completed. Full profile:", formData);
-      console.log("[SERVER] Authenticating user with profile:", formData);
-      login({
-        fullName: formData.fullName,
-        universityEmail: formData.universityEmail,
-        gpa: formData.gpa,
-        academicYear: formData.academicYear,
-        interests: formData.interests,
-        careerGoals: formData.careerGoals,
-      });
-      router.push("/dashboard");
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const toggleInterest = (id: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      interests: prev.interests.includes(id)
-        ? prev.interests.filter((i) => i !== id)
-        : [...prev.interests, id],
-    }));
-  };
-
-  const isStepValid = () => {
-    switch (currentStep) {
-      case 1:
-        return formData.fullName.trim() !== "" && formData.universityEmail.trim() !== "";
-      case 2:
-        return formData.gpa.trim() !== "" && formData.academicYear !== "";
-      case 3:
-        return formData.interests.length > 0;
-      default:
-        return false;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Header */}
@@ -113,7 +33,7 @@ export default function Onboarding() {
                 Setup Progress
               </h3>
               <div className="space-y-4">
-                {updatedSteps.map((step, index) => (
+                {steps.map((step, index) => (
                   <div key={step.number} className="flex items-start gap-3">
                     <div className="relative">
                       <div
@@ -131,7 +51,7 @@ export default function Onboarding() {
                           step.number
                         )}
                       </div>
-                      {index < updatedSteps.length - 1 && (
+                      {index < steps.length - 1 && (
                         <div className="absolute top-8 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-200"></div>
                       )}
                     </div>
@@ -166,205 +86,69 @@ export default function Onboarding() {
             </div>
           </div>
 
-          {/* Main Form */}
+          {/* Main Content */}
           <div className="bg-white rounded-xl border border-slate-200 p-8 md:p-12">
-            {/* Step 1: Account Identity */}
-            {currentStep === 1 && (
-              <>
-                <div className="mb-8">
-                  <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">
-                    Create Your Account
-                  </h2>
-                  <p className="text-slate-600">
-                    Let's start with your basic identity information.
-                  </p>
+            <div className="mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">
+                Get Started with GPSpark
+              </h2>
+              <p className="text-slate-600">
+                Create your account to access all features and start building your graduation project.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-blue-50 border border-blue-100">
+                <div className="w-8 h-8 rounded-full bg-blue-900 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  1
                 </div>
-
-                <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      placeholder="John Doe"
-                      className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      University Email
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.universityEmail}
-                      onChange={(e) => setFormData({ ...formData, universityEmail: e.target.value })}
-                      placeholder="j.doe@fcai.edu"
-                      className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between pt-6 border-t border-slate-200">
-                    <Link href="/" className="text-slate-600 hover:text-slate-900 text-sm font-medium">
-                      ← Back to Home
-                    </Link>
-                    <Button
-                      onClick={handleNext}
-                      disabled={!isStepValid()}
-                      className="bg-blue-900 hover:bg-blue-800 text-white px-8 py-5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Continue to Profile
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </form>
-              </>
-            )}
-
-            {/* Step 2: Academic Profile */}
-            {currentStep === 2 && (
-              <>
-                <div className="mb-8">
-                  <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">
-                    Build Your Academic Profile
-                  </h2>
-                  <p className="text-slate-600">
-                    Help us understand your background to tailor project recommendations for you.
-                  </p>
+                <div>
+                  <h4 className="font-semibold text-slate-900">Create Your Account</h4>
+                  <p className="text-sm text-slate-600 mt-1">Sign up with your university email to get started.</p>
                 </div>
+              </div>
 
-                <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Current GPA
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={formData.gpa}
-                          onChange={(e) => setFormData({ ...formData, gpa: e.target.value })}
-                          placeholder="4.00"
-                          className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                          📊
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Academic Year
-                      </label>
-                      <select
-                        value={formData.academicYear}
-                        onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-                      >
-                        <option>Senior (Capstone Ready)</option>
-                        <option>Junior</option>
-                        <option>Sophomore</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-6 border-t border-slate-200">
-                    <Button variant="ghost" onClick={handleBack} className="text-slate-600 hover:text-slate-900">
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back to Identity
-                    </Button>
-                    <Button
-                      onClick={handleNext}
-                      disabled={!isStepValid()}
-                      className="bg-blue-900 hover:bg-blue-800 text-white px-8 py-5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Continue to Interests
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </form>
-              </>
-            )}
-
-            {/* Step 3: Interests & Goals */}
-            {currentStep === 3 && (
-              <>
-                <div className="mb-8">
-                  <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">
-                    Interests & Goals
-                  </h2>
-                  <p className="text-slate-600">
-                    Tell us about your interests and career aspirations.
-                  </p>
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-slate-50 border border-slate-100">
+                <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  2
                 </div>
+                <div>
+                  <h4 className="font-semibold text-slate-900">Complete Your Profile</h4>
+                  <p className="text-sm text-slate-600 mt-1">Add your academic info, interests, and career goals.</p>
+                </div>
+              </div>
 
-                <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-3">
-                      Primary Areas of Interest
-                    </label>
-                    <div className="flex flex-wrap gap-3">
-                      {interestOptions.map((option) => {
-                        const isSelected = formData.interests.includes(option.id);
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => toggleInterest(option.id)}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${
-                              isSelected
-                                ? "bg-blue-900 border-blue-900 text-white"
-                                : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
-                            }`}
-                          >
-                            {typeof option.icon === "string" ? (
-                              <span>{option.icon}</span>
-                            ) : (
-                              <option.icon className="h-4 w-4" />
-                            )}
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-slate-50 border border-slate-100">
+                <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  3
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-900">Start Building</h4>
+                  <p className="text-sm text-slate-600 mt-1">Use AI brainstorming, find teammates, and track milestones.</p>
+                </div>
+              </div>
+            </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Career Goals & Aspirations
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={formData.careerGoals}
-                      onChange={(e) => setFormData({ ...formData, careerGoals: e.target.value })}
-                      placeholder="Describe where you see yourself in 3 years..."
-                      className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    />
-                    <p className="text-xs text-slate-500 mt-2">
-                      This helps our AI match you with mentors from relevant industries.
-                    </p>
-                  </div>
+            <div className="flex items-center justify-between pt-8 border-t border-slate-200 mt-8">
+              <Link href="/" className="text-slate-600 hover:text-slate-900 text-sm font-medium">
+                ← Back to Home
+              </Link>
+              <Link href="/signup">
+                <Button className="bg-blue-900 hover:bg-blue-800 text-white px-8 py-5 text-base">
+                  Create Account
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
 
-                  <div className="flex items-center justify-between pt-6 border-t border-slate-200">
-                    <Button variant="ghost" onClick={handleBack} className="text-slate-600 hover:text-slate-900">
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back to Profile
-                    </Button>
-                    <Button
-                      onClick={handleNext}
-                      disabled={!isStepValid()}
-                      className="bg-blue-900 hover:bg-blue-800 text-white px-8 py-5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Complete Setup
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </form>
-              </>
-            )}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-slate-600">
+                Already have an account?{" "}
+                <Link href="/signin" className="text-blue-600 hover:underline font-medium">
+                  Sign in
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
 

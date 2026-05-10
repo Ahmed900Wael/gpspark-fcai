@@ -30,7 +30,7 @@ const upcomingMilestones = [
 ];
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <ProtectedRoute>
