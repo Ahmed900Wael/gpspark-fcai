@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { ProtectedRoute } from "@/components/protected-route";
+import { Footer } from "@/components/footer";
 import { useAuth } from "@/contexts/auth-context";
 import { User, Mail, GraduationCap, BookOpen, Target, Edit2, Save, X, LogOut } from "lucide-react";
 
@@ -306,10 +307,12 @@ export default function Profile() {
                   )}
                 </div>
               </div>
-            </div>
           </div>
         </div>
+
+        <Footer />
       </div>
+    </div>
     </ProtectedRoute>
   );
 }

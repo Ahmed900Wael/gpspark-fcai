@@ -47,7 +47,9 @@ export default function SignUp() {
       setError(authError);
       setIsLoading(false);
     } else {
-      console.log("[CLIENT] Sign up successful, redirecting to dashboard");
+      console.log("[CLIENT] Sign up successful, waiting for session sync...");
+      // Wait for onAuthStateChange to fire and sync localStorage
+      await new Promise(resolve => setTimeout(resolve, 500));
       router.push("/dashboard");
     }
   };

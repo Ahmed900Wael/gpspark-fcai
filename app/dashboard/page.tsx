@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { ProtectedRoute } from "@/components/protected-route";
+import { Footer } from "@/components/footer";
 import { useAuth } from "@/contexts/auth-context";
 import { 
   TrendingUp, Clock, Target, Award, Brain, Users, Library, Flag
@@ -181,6 +182,8 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        <Footer />
       </div>
     </div>
     </ProtectedRoute>

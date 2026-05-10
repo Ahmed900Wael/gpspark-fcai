@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { ProtectedRoute } from "@/components/protected-route";
+import { Footer } from "@/components/footer";
 import { 
   Brain, Send, Paperclip, Clock, MoreVertical, User, HelpCircle, CheckCircle2, 
   AlertTriangle, Battery, BarChart3, FileText, Loader2
@@ -401,6 +402,8 @@ export default function BrainstormAI() {
             </Button>
           </aside>
         </div>
+
+        <Footer />
       </div>
     </div>
     </ProtectedRoute>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import { SimpleHeader } from "@/components/navbar";
 import { ProtectedRoute } from "@/components/protected-route";
+import { Footer } from "@/components/footer";
 import { 
   Search, Filter, Calendar, Star, ArrowRight, Lightbulb,
   User, ChevronDown
@@ -255,21 +256,7 @@ export default function GPLibrary() {
           </div>
         </div>
 
-        {/* Footer */}
-        <footer className="border-t border-slate-200 bg-white px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <img src="/logo.svg" alt="GPSpark Logo" className="w-6 h-6" />
-            </div>
-            <div className="flex gap-6 text-xs text-slate-500">
-              <Link href="/about" className="hover:text-slate-900">About</Link>
-              <Link href="/methodology" className="hover:text-slate-900">Methodology</Link>
-              <Link href="/privacy" className="hover:text-slate-900">Privacy Policy</Link>
-              <Link href="/support" className="hover:text-slate-900">Contact Support</Link>
-            </div>
-            <span className="text-xs text-slate-500">© 2024 GPSpark FCAI. All rights reserved.</span>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </div>
     </ProtectedRoute>

@@ -38,13 +38,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
+    // Restore session from localStorage immediately
+    const cachedSession = localStorage.getItem("gpspark_session");
+    const cachedUser = localStorage.getItem("gpspark_user");
+    
+    if (cachedSession && cachedUser) {
+      try {
+        const parsedSession = JSON.parse(cachedSession);
+        const parsedUser = JSON.parse(cachedUser);
+        setSession(parsedSession);
+        setSupabaseUser(parsedSession.user);
+        setUser(parsedUser);
+      } catch (e) {
+        localStorage.removeItem("gpspark_session");
+        localStorage.removeItem("gpspark_user");
+      }
+    }
+
+    // Verify session with Supabase
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setSupabaseUser(session?.user ?? null);
-      if (session?.user) {
+      if (session) {
+        setSession(session);
+        setSupabaseUser(session.user);
         fetchUserProfile(session.user.id);
       } else {
+        setSession(null);
+        setSupabaseUser(null);
+        setUser(null);
+        localStorage.removeItem("gpspark_session");
+        localStorage.removeItem("gpspark_user");
         setIsLoading(false);
       }
     });
@@ -54,10 +76,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("[SERVER] Auth state changed:", _event);
       setSession(session);
       setSupabaseUser(session?.user ?? null);
-      if (session?.user) {
+      
+      if (session) {
+        localStorage.setItem("gpspark_session", JSON.stringify(session));
         fetchUserProfile(session.user.id);
       } else {
         setUser(null);
+        localStorage.removeItem("gpspark_session");
         localStorage.removeItem("gpspark_user");
         setIsLoading(false);
       }
@@ -185,6 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSupabaseUser(null);
       setSession(null);
       localStorage.removeItem("gpspark_user");
+      localStorage.removeItem("gpspark_session");
       console.log("[SERVER] User signed out successfully");
     } catch (err) {
       console.error("[SERVER] Sign out error:", err);
