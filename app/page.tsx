@@ -25,7 +25,7 @@ export default function Home() {
               />
             </div>
             <Link href="/onboarding">
-              <Button className="bg-blue-900 hover:bg-blue-800 text-white">
+              <Button className="bg-blue-900 hover:bg-blue-800 text-white cursor-pointer">
                 Sign In
               </Button>
             </Link>
@@ -55,14 +55,16 @@ export default function Home() {
             
             <div className="flex flex-wrap gap-4">
             <Link href="/onboarding">
-              <Button className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-5 text-base">
+              <Button className="bg-blue-900 hover:bg-blue-800 text-white cursor-pointer px-6 py-5 text-base">
                 Start Your Project
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-              <Button variant="outline" className="px-6 py-5 text-base border-slate-300">
-                View Project Library
-              </Button>
+              <Link href="/library">
+                <Button variant="outline" className="px-6 py-5 text-base border-slate-300 cursor-pointer">
+                  View Project Library
+                </Button>
+              </Link>
             </div>
             
             <div className="flex items-center gap-3 pt-4">
@@ -177,7 +179,7 @@ export default function Home() {
                 Browse thousands of successful capstone projects from alumni across top universities.
               </p>
               <Link href="/library">
-                <Button className="bg-white text-blue-900 hover:bg-blue-50">
+                <Button className="bg-white text-blue-900 hover:bg-blue-50 cursor-pointer">
                   Search Library
                 </Button>
               </Link>
@@ -227,11 +229,11 @@ export default function Home() {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link href="/onboarding">
-                <Button className="bg-amber-400 text-blue-900 hover:bg-amber-300 px-8 py-5 text-base font-semibold">
+                <Button className="bg-amber-400 text-blue-900 hover:bg-amber-300 cursor-pointer px-8 py-5 text-base font-semibold">
                   Create Free Account
                 </Button>
               </Link>
-              <Button variant="outline" className="border-white text-slate-900 hover:bg-transparent hover:text-white px-8 py-5 text-base">
+              <Button variant="outline" className="border-white text-slate-900 hover:bg-transparent hover:text-white cursor-pointer px-8 py-5 text-base">
                 Talk to an Advisor
               </Button>
             </div>
