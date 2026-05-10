@@ -8,10 +8,10 @@ import { SimpleHeader } from "@/components/navbar";
 import { ProtectedRoute } from "@/components/protected-route";
 import { Footer } from "@/components/footer";
 import { useAuth } from "@/contexts/auth-context";
-import { User, Mail, GraduationCap, BookOpen, Target, Edit2, Save, X, LogOut } from "lucide-react";
+import { User, Mail, GraduationCap, BookOpen, Target, Edit2, Save, X, LogOut, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function Profile() {
-  const { user, signOut, updateProfile, supabaseUser } = useAuth();
+  const { user, signOut, updateProfile, supabaseUser, updateAuthEmail } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -23,6 +23,12 @@ export default function Profile() {
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  const [authEmail, setAuthEmail] = useState("");
+  const [newAuthEmail, setNewAuthEmail] = useState("");
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -33,8 +39,9 @@ export default function Profile() {
         interests: user.interests,
         careerGoals: user.careerGoals,
       });
+      setAuthEmail(supabaseUser?.email || user.universityEmail);
     }
-  }, [user]);
+  }, [user, supabaseUser]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -75,6 +82,39 @@ export default function Profile() {
         ? prev.interests.filter((i) => i !== interest)
         : [...prev.interests, interest],
     }));
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!newAuthEmail.trim()) {
+      setEmailStatus({ type: "error", message: "Please enter a new email address" });
+      return;
+    }
+    if (newAuthEmail === authEmail) {
+      setEmailStatus({ type: "error", message: "New email must be different from current email" });
+      return;
+    }
+
+    setIsSavingEmail(true);
+    setEmailStatus(null);
+    console.log("[CLIENT] Updating auth email to:", newAuthEmail);
+
+    const { error, requiresConfirmation } = await updateAuthEmail(newAuthEmail);
+
+    if (error) {
+      setEmailStatus({ type: "error", message: error });
+    } else if (requiresConfirmation) {
+      setEmailStatus({ type: "success", message: `Confirmation email sent to ${newAuthEmail}. Check your inbox and click the link to verify. You'll need to sign in with the new email after confirmation.` });
+      setAuthEmail(newAuthEmail);
+      setIsEditingEmail(false);
+      setNewAuthEmail("");
+    }
+    setIsSavingEmail(false);
+  };
+
+  const handleCancelEmailEdit = () => {
+    setIsEditingEmail(false);
+    setNewAuthEmail("");
+    setEmailStatus(null);
   };
 
   const interestOptions = ["AI & ML", "Web Dev", "Cybersecurity", "Mobile Apps", "Big Data", "Cloud Systems"];
@@ -206,6 +246,69 @@ export default function Profile() {
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* Login Email */}
+                <div className="bg-white rounded-xl border border-slate-200 p-6">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                    <Mail className="h-5 w-5 text-blue-600" />
+                    Login Email
+                  </h3>
+                  <p className="text-sm text-slate-500 mb-4">This is the email you use to sign in. Changing it requires email verification.</p>
+                  
+                  {emailStatus && (
+                    <div className={`mb-4 p-3 rounded-lg text-sm flex items-start gap-2 ${
+                      emailStatus.type === "success" 
+                        ? "bg-green-50 border border-green-200 text-green-700" 
+                        : "bg-red-50 border border-red-200 text-red-700"
+                    }`}>
+                      {emailStatus.type === "success" ? (
+                        <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      )}
+                      <span>{emailStatus.message}</span>
+                    </div>
+                  )}
+
+                  {!isEditingEmail ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-slate-900">
+                        <Mail className="h-4 w-4 text-slate-400" />
+                        <span>{authEmail}</span>
+                      </div>
+                      <Button
+                        onClick={() => setIsEditingEmail(true)}
+                        variant="outline"
+                        className="border-slate-200 text-sm"
+                      >
+                        <Edit2 className="h-4 w-4 mr-2" />
+                        Change Email
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <input
+                        type="email"
+                        value={newAuthEmail}
+                        onChange={(e) => setNewAuthEmail(e.target.value)}
+                        placeholder="Enter new email"
+                        className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleUpdateEmail}
+                          disabled={isSavingEmail || !newAuthEmail.trim()}
+                          className="bg-blue-900 hover:bg-blue-800 text-white disabled:opacity-50"
+                        >
+                          {isSavingEmail ? "Sending..." : "Update Email"}
+                        </Button>
+                        <Button onClick={handleCancelEmailEdit} variant="outline" className="border-slate-200">
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Academic Info */}

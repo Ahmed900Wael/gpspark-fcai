@@ -27,6 +27,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateProfile: (profile: Partial<UserProfile>) => Promise<{ error: string | null }>;
   getUserProfile: (userId: string) => Promise<UserProfile | null>;
+  updateAuthEmail: (newEmail: string) => Promise<{ error: string | null; requiresConfirmation: boolean }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -282,6 +283,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateAuthEmail = async (newEmail: string) => {
+    try {
+      if (!supabaseUser) return { error: "Not authenticated", requiresConfirmation: false };
+
+      console.log("[SERVER] Updating auth email from", supabaseUser.email, "to", newEmail);
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+
+      if (error) {
+        console.error("[SERVER] Auth email update error:", error.message);
+        return { error: error.message, requiresConfirmation: false };
+      }
+
+      console.log("[SERVER] Auth email update initiated. Confirmation email sent to:", newEmail);
+      return { error: null, requiresConfirmation: true };
+    } catch (err) {
+      console.error("[SERVER] Auth email update error:", err);
+      return { error: "An unexpected error occurred", requiresConfirmation: false };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -295,6 +316,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signOut,
         updateProfile,
         getUserProfile,
+        updateAuthEmail,
       }}
     >
       {children}
