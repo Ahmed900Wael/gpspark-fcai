@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
+import { useNotification } from "@/contexts/notification-context";
 import { ArrowLeft, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 
 export default function SignUp() {
   const router = useRouter();
   const { signUp } = useAuth();
+  const { addNotification } = useNotification();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -48,7 +50,7 @@ export default function SignUp() {
       setIsLoading(false);
     } else {
       console.log("[CLIENT] Sign up successful, waiting for session sync...");
-      // Wait for onAuthStateChange to fire and sync localStorage
+      addNotification("success", "Welcome to GPSpark!", "Your account has been created. Complete your profile to get started.");
       await new Promise(resolve => setTimeout(resolve, 500));
       router.push("/dashboard");
     }

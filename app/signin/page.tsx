@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
+import { useNotification } from "@/contexts/notification-context";
 import { ArrowLeft, Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 export default function SignIn() {
   const router = useRouter();
   const { signIn } = useAuth();
+  const { addNotification } = useNotification();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +33,7 @@ export default function SignIn() {
       setIsLoading(false);
     } else {
       console.log("[CLIENT] Sign in successful, waiting for session sync...");
-      // Wait for onAuthStateChange to fire and sync localStorage
+      addNotification("success", "Welcome Back!", "You have signed in successfully.");
       await new Promise(resolve => setTimeout(resolve, 500));
       router.push("/dashboard");
     }
