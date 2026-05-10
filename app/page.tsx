@@ -22,9 +22,11 @@ export default function Home() {
                 className="bg-transparent text-sm outline-none w-40"
               />
             </div>
-            <Button className="bg-blue-900 hover:bg-blue-800 text-white">
-              Sign In
-            </Button>
+            <Link href="/onboarding">
+              <Button className="bg-blue-900 hover:bg-blue-800 text-white">
+                Sign In
+              </Button>
+            </Link>
           </div>
         </div>
       </nav>
