@@ -14,9 +14,11 @@ import {
   AlertTriangle, Battery, BarChart3, FileText, Loader2, Plus, MessageSquare, Trash2, Sparkles
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Message {
-  id: number;
+  id: string;
   role: "assistant" | "user";
   content: string;
   time: string;
@@ -170,8 +172,8 @@ export default function BrainstormAI() {
       return;
     }
 
-    const formattedMessages: Message[] = (data || []).map((msg) => ({
-      id: new Date(msg.timestamp).getTime(),
+    const formattedMessages: Message[] = (data || []).map((msg, index) => ({
+      id: `${msg.id}-${index}`,
       role: msg.role as "assistant" | "user",
       content: msg.content,
       time: new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -193,7 +195,7 @@ export default function BrainstormAI() {
         : "Welcome! I'm your GPSpark AI tutor. I'm here to help you brainstorm, refine, and plan your graduation project. What would you like to work on today?";
 
       const welcomeMessage: Message = {
-        id: Date.now(),
+        id: `welcome-${Date.now()}`,
         role: "assistant",
         content: welcomePrompt,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -249,7 +251,7 @@ export default function BrainstormAI() {
     if (!messageText.trim() || isLoading || !supabaseUser) return;
 
     const userMessage: Message = {
-      id: Date.now(),
+      id: `user-${Date.now()}`,
       role: "user",
       content: messageText.trim(),
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -289,7 +291,7 @@ export default function BrainstormAI() {
       let assistantContent = "";
 
       const assistantMessage: Message = {
-        id: Date.now() + 1,
+        id: `assistant-${Date.now() + 1}`,
         role: "assistant",
         content: "",
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -316,7 +318,7 @@ export default function BrainstormAI() {
       console.error("[BRAINSTEM] Error:", error);
       addNotification("error", "AI Error", "Failed to get response. Please try again.");
       const errorMessage: Message = {
-        id: Date.now() + 1,
+        id: `error-${Date.now() + 1}`,
         role: "assistant",
         content: "Sorry, I encountered an error. Please try again.",
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -502,21 +504,21 @@ export default function BrainstormAI() {
                       <User className="h-5 w-5" />
                     )}
                   </div>
-                  <div className={`max-w-[70%] ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col`}>
+                  <div className={`max-w-[75%] ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col`}>
                     <div className={`rounded-2xl px-5 py-4 ${
                       msg.role === "user"
                         ? "bg-blue-900 text-white"
                         : "bg-white border border-slate-200 text-slate-700"
                     }`}>
-                      <div className="text-sm leading-relaxed whitespace-pre-line">
-                        {msg.content.split("\n").map((line, i) => (
-                          <p key={i} className={line.startsWith("•") ? "ml-4" : ""}>
-                            {line.replace("•", "○").replace(/\*\*(.*?)\*\*/g, "$1").split(/(\*\*.*?\*\*)/).map((part, j) => 
-                              part.startsWith("**") && part.endsWith("**") ? <strong key={j}>{part.slice(2, -2)}</strong> : part
-                            )}
-                          </p>
-                        ))}
-                      </div>
+                      {msg.role === "user" ? (
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+                      ) : (
+                        <div className="text-sm leading-relaxed prose prose-sm prose-slate max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-code:bg-slate-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-slate-100 prose-pre:p-3 prose-pre:rounded">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mt-2 px-1">
                       <span className={`text-xs font-medium ${msg.role === "assistant" ? "text-slate-500" : "text-slate-400"}`}>
