@@ -39,6 +39,10 @@ CREATE POLICY "Users can update own sessions"
   ON brainstorm_sessions FOR UPDATE
   USING (auth.uid() = user_id);
 
+CREATE POLICY "Users can delete own sessions"
+  ON brainstorm_sessions FOR DELETE
+  USING (auth.uid() = user_id);
+
 -- Policies for chat_messages
 CREATE POLICY "Users can view messages from own sessions"
   ON chat_messages FOR SELECT

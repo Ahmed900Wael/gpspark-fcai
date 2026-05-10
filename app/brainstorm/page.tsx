@@ -388,263 +388,262 @@ export default function BrainstormAI() {
 
   return (
     <ProtectedRoute>
-    <div className="min-h-screen bg-slate-50">
-      <Sidebar activePage="/brainstorm" />
+      <div className="h-screen bg-slate-50 overflow-hidden">
+        <Sidebar activePage="/brainstorm" />
 
-      <div className="lg:ml-64 flex flex-col min-h-screen">
-        <SimpleHeader />
+        <div className="lg:ml-64 flex flex-col h-screen">
+          <SimpleHeader />
 
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          {/* Session Sidebar (Desktop) */}
-          <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200 bg-white">
-            <div className="p-4 border-b border-slate-200">
-              <Button
-                onClick={createNewSession}
-                className="w-full bg-blue-900 hover:bg-blue-800 text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Session
-              </Button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {sessions.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm text-slate-500">No sessions yet</p>
-                  <p className="text-xs text-slate-400 mt-1">Start a new conversation</p>
-                </div>
-              ) : (
-                sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    onClick={() => switchSession(session.id)}
-                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                      currentSessionId === session.id
-                        ? "bg-blue-50 border border-blue-200"
-                        : "bg-slate-50 hover:bg-slate-100"
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">
-                        {session.project_focus}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {formatTimeAgo(session.created_at)}
-                      </p>
-                    </div>
-                    <button
-                      onClick={(e) => deleteSession(session.id, e)}
-                      className="p-1 text-slate-400 hover:text-red-500 ml-2"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </aside>
-
-          {/* Main Chat Area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Chat Header */}
-            <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setShowSidebar(!showSidebar)}
-                    className="lg:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-600"
-                  >
-                    <MessageSquare className="h-5 w-5" />
-                  </button>
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
-                        Powered by OpenRouter
-                      </span>
-                    </div>
-                    <h1 className="text-xl md:text-2xl font-bold text-slate-900">
-                      {currentSessionId ? "Brainstorming Session" : "New Session"}
-                    </h1>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-sm text-slate-600">
-                        {currentSessionId 
-                          ? `Session active` 
-                          : "Start a new conversation or select one"
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={createNewSession}
-                    variant="outline"
-                    className="border-slate-200 text-sm hidden sm:flex"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Session
-                  </Button>
-                  <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-600">
-                    <MoreVertical className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Session Sidebar (Mobile) */}
-            {showSidebar && (
-              <div className="lg:hidden border-b border-slate-200 bg-white p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-slate-900">Sessions</h3>
-                  <Button onClick={createNewSession} variant="outline" className="text-xs">
-                    <Plus className="h-3 w-3 mr-1" />
-                    New
-                  </Button>
-                </div>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {sessions.length === 0 ? (
-                    <p className="text-sm text-slate-500 text-center py-4">No sessions yet</p>
-                  ) : (
-                    sessions.map((session) => (
-                      <div
-                        key={session.id}
-                        onClick={() => switchSession(session.id)}
-                        className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                          currentSessionId === session.id
-                            ? "bg-blue-50 border border-blue-200"
-                            : "bg-slate-50 hover:bg-slate-100"
-                        }`}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">
-                            {session.project_focus}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {formatTimeAgo(session.created_at)}
-                          </p>
-                        </div>
-                        <button
-                          onClick={(e) => deleteSession(session.id, e)}
-                          className="p-1 text-slate-400 hover:text-red-500"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                    msg.role === "assistant" 
-                      ? "bg-blue-900 text-white" 
-                      : "bg-gradient-to-br from-blue-400 to-indigo-500 text-white"
-                  }`}>
-                    {msg.role === "assistant" ? (
-                      <Brain className="h-5 w-5" />
-                    ) : (
-                      <User className="h-5 w-5" />
-                    )}
-                  </div>
-                  <div className={`max-w-[75%] ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col`}>
-                    <div className={`rounded-2xl px-5 py-4 ${
-                      msg.role === "user"
-                        ? "bg-blue-900 text-white"
-                        : "bg-white border border-slate-200 text-slate-700"
-                    }`}>
-                      {msg.role === "user" ? (
-                        <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
-                      ) : (
-                        <div className="text-sm leading-relaxed prose prose-sm prose-slate max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-code:bg-slate-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-slate-100 prose-pre:p-3 prose-pre:rounded">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {msg.content}
-                          </ReactMarkdown>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-2 px-1">
-                      <span className={`text-xs font-medium ${msg.role === "assistant" ? "text-slate-500" : "text-slate-400"}`}>
-                        {msg.role === "assistant" ? "GPSpark AI" : "You"}
-                      </span>
-                      <span className="text-xs text-slate-400">• {msg.time}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {isLoading && (
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center">
-                    <Brain className="h-5 w-5" />
-                  </div>
-                  <div className="max-w-[70%] flex flex-col items-start">
-                    <div className="rounded-2xl px-5 py-4 bg-white border border-slate-200 text-slate-700">
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">Thinking...</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-
-              {/* Context-Aware Suggestion Chips */}
-              {!isLoading && messages.length > 0 && (
-                <div className="flex flex-wrap gap-3 ml-14">
-                  {suggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSendMessage(suggestion)}
-                      className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-900 text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer flex items-center gap-2"
-                    >
-                      <Sparkles className="h-3 w-3" />
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
-              </div>
-
-              {/* Input Area */}
-              <div className="border-t border-slate-200 bg-white p-4 flex-shrink-0">
-              <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
-                <input
-                  type="text"
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Type your ideas here..."
-                  className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 outline-none"
-                />
-                <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
-                  <Paperclip className="h-5 w-5" />
-                </button>
-                <Button 
-                  onClick={() => handleSendMessage()}
-                  disabled={isLoading || !messageInput.trim()}
-                  className="bg-blue-900 hover:bg-blue-800 text-white rounded-lg cursor-pointer disabled:opacity-50"
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            {/* Session Sidebar (Desktop) */}
+            <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200 bg-white">
+              <div className="p-4 border-b border-slate-200">
+                <Button
+                  onClick={createNewSession}
+                  className="w-full bg-blue-900 hover:bg-blue-800 text-white"
                 >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Session
                 </Button>
               </div>
-              <div className="text-center mt-3">
-                <span className="text-xs text-slate-400 uppercase tracking-wide">
-                  Powered by OpenRouter AI • Free Tier
-                </span>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {sessions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">No sessions yet</p>
+                    <p className="text-xs text-slate-400 mt-1">Start a new conversation</p>
+                  </div>
+                ) : (
+                  sessions.map((session) => (
+                    <div
+                      key={session.id}
+                      onClick={() => switchSession(session.id)}
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                        currentSessionId === session.id
+                          ? "bg-blue-50 border border-blue-200"
+                          : "bg-slate-50 hover:bg-slate-100"
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">
+                          {session.project_focus}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatTimeAgo(session.created_at)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => deleteSession(session.id, e)}
+                        className="p-1 text-slate-400 hover:text-red-500 ml-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </aside>
+
+            {/* Main Chat Area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Chat Header */}
+              <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowSidebar(!showSidebar)}
+                      className="lg:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-600"
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                    </button>
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
+                          Powered by OpenRouter
+                        </span>
+                      </div>
+                      <h1 className="text-xl md:text-2xl font-bold text-slate-900">
+                        {currentSessionId ? "Brainstorming Session" : "New Session"}
+                      </h1>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span className="text-sm text-slate-600">
+                          {currentSessionId 
+                            ? `Session active` 
+                            : "Start a new conversation or select one"
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={createNewSession}
+                      variant="outline"
+                      className="border-slate-200 text-sm hidden sm:flex"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Session
+                    </Button>
+                    <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-600">
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Session Sidebar (Mobile) */}
+              {showSidebar && (
+                <div className="lg:hidden border-b border-slate-200 bg-white p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-slate-900">Sessions</h3>
+                    <Button onClick={createNewSession} variant="outline" className="text-xs">
+                      <Plus className="h-3 w-3 mr-1" />
+                      New
+                    </Button>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {sessions.length === 0 ? (
+                      <p className="text-sm text-slate-500 text-center py-4">No sessions yet</p>
+                    ) : (
+                      sessions.map((session) => (
+                        <div
+                          key={session.id}
+                          onClick={() => switchSession(session.id)}
+                          className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                            currentSessionId === session.id
+                              ? "bg-blue-50 border border-blue-200"
+                              : "bg-slate-50 hover:bg-slate-100"
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">
+                              {session.project_focus}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {formatTimeAgo(session.created_at)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => deleteSession(session.id, e)}
+                            className="p-1 text-slate-400 hover:text-red-500"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Messages Container */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {messages.map((msg) => (
+                  <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                      msg.role === "assistant" 
+                        ? "bg-blue-900 text-white" 
+                        : "bg-gradient-to-br from-blue-400 to-indigo-500 text-white"
+                    }`}>
+                      {msg.role === "assistant" ? (
+                        <Brain className="h-5 w-5" />
+                      ) : (
+                        <User className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div className={`max-w-[75%] ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col`}>
+                      <div className={`rounded-2xl px-5 py-4 ${
+                        msg.role === "user"
+                          ? "bg-blue-900 text-white"
+                          : "bg-white border border-slate-200 text-slate-700"
+                      }`}>
+                        {msg.role === "user" ? (
+                          <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+                        ) : (
+                          <div className="text-sm leading-relaxed prose prose-sm prose-slate max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-code:bg-slate-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-slate-100 prose-pre:p-3 prose-pre:rounded">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {msg.content}
+                            </ReactMarkdown>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2 px-1">
+                        <span className={`text-xs font-medium ${msg.role === "assistant" ? "text-slate-500" : "text-slate-400"}`}>
+                          {msg.role === "assistant" ? "GPSpark AI" : "You"}
+                        </span>
+                        <span className="text-xs text-slate-400">• {msg.time}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {isLoading && (
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center">
+                      <Brain className="h-5 w-5" />
+                    </div>
+                    <div className="max-w-[70%] flex flex-col items-start">
+                      <div className="rounded-2xl px-5 py-4 bg-white border border-slate-200 text-slate-700">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm">Thinking...</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+
+                {/* Context-Aware Suggestion Chips */}
+                {!isLoading && messages.length > 0 && (
+                  <div className="flex flex-wrap gap-3 ml-14">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSendMessage(suggestion)}
+                        className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-900 text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer flex items-center gap-2"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                </div>
+
+                {/* Input Area */}
+                <div className="border-t border-slate-200 bg-white p-4 flex-shrink-0">
+                <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
+                  <input
+                    type="text"
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="Type your ideas here..."
+                    className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 outline-none"
+                  />
+                  <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+                    <Paperclip className="h-5 w-5" />
+                  </button>
+                  <Button 
+                    onClick={() => handleSendMessage()}
+                    disabled={isLoading || !messageInput.trim()}
+                    className="bg-blue-900 hover:bg-blue-800 text-white rounded-lg cursor-pointer disabled:opacity-50"
+                  >
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <div className="text-center mt-3">
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">
+                    Powered by OpenRouter AI • Free Tier
+                  </span>
+                </div>
               </div>
             </div>
-           </div>
-        <Footer />
-      </div>
-      </div>
+          </div>
+        </div>
       </div>
     </ProtectedRoute>
   );
