@@ -50,10 +50,12 @@ export default function Home() {
             </p>
             
             <div className="flex flex-wrap gap-4">
+            <Link href="/onboarding">
               <Button className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-5 text-base">
                 Start Your Project
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+            </Link>
               <Button variant="outline" className="px-6 py-5 text-base border-slate-300">
                 View Project Library
               </Button>
