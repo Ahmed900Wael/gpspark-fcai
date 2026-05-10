@@ -625,7 +625,7 @@ export default function BrainstormAI() {
            </div>
           </div>
 
-          <aside className="w-full lg:w-80 bg-slate-50 border-l border-slate-200 p-4 md:p-6 overflow-y-auto">
+          {/* <aside className="w-full lg:w-80 bg-slate-50 border-l border-slate-200 p-4 md:p-6 overflow-y-auto">
             <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-slate-900">Project Feasibility</h3>
@@ -715,10 +715,10 @@ export default function BrainstormAI() {
               <FileText className="h-4 w-4 mr-2" />
               Export Research Summary
             </Button>
-          </aside>
+          </aside> */}
         </div>
 
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </div>
     </ProtectedRoute>

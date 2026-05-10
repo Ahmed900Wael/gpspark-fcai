@@ -150,18 +150,19 @@ export async function POST(request: Request) {
             }
 
             if (currentSessionId) {
-              for (const msg of messages) {
-                if (msg.role === "user") {
-                  await supabaseAdmin
-                    .from("chat_messages")
-                    .insert({
-                      session_id: currentSessionId,
-                      role: msg.role,
-                      content: msg.content,
-                    });
-                }
+              // Only save the LAST user message (the one just sent)
+              const lastUserMessage = messages.filter((m: any) => m.role === "user").pop();
+              if (lastUserMessage) {
+                await supabaseAdmin
+                  .from("chat_messages")
+                  .insert({
+                    session_id: currentSessionId,
+                    role: lastUserMessage.role,
+                    content: lastUserMessage.content,
+                  });
               }
 
+              // Save assistant response
               await supabaseAdmin
                 .from("chat_messages")
                 .insert({
