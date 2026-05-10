@@ -231,7 +231,7 @@ export default function Home() {
                   Create Free Account
                 </Button>
               </Link>
-              <Button variant="outline" className="border-white text-slate-900 hover:bg-white hover:text-white px-8 py-5 text-base">
+              <Button variant="outline" className="border-white text-slate-900 hover:bg-transparent hover:text-white px-8 py-5 text-base">
                 Talk to an Advisor
               </Button>
             </div>
