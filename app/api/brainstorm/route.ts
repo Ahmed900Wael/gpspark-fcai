@@ -9,6 +9,12 @@ const supabaseAdmin = SUPABASE_URL && SUPABASE_SERVICE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   : null;
 
+const MODELS = [
+  "z-ai/glm-4.5-air:free",
+  "meta-llama/llama-3.2-3b-instruct:free",
+  "qwen/qwen-2.5-7b-instruct:free",
+];
+
 function buildSystemPrompt(userProfile: any, projectFocus?: string) {
   let prompt = `You are GPSpark AI, an expert academic tutor specializing in graduation projects for FCAI-CU students. Your role is to:
 
@@ -40,72 +46,66 @@ Keep responses concise but thorough. Use bullet points and numbered lists when a
   return prompt;
 }
 
+async function fetchWithRetry(messages: any[], systemPrompt: string, modelIndex: number = 0): Promise<Response> {
+  const model = MODELS[modelIndex];
+  
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      "HTTP-Referer": "https://gpspark.vercel.app",
+      "X-Title": "GPspark",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...messages,
+      ],
+      stream: true,
+      max_tokens: 2048,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok && modelIndex < MODELS.length - 1) {
+    console.warn(`[BRAINSTEM_API] Model ${model} failed, trying next...`);
+    return fetchWithRetry(messages, systemPrompt, modelIndex + 1);
+  }
+
+  return response;
+}
+
 export async function POST(request: Request) {
   try {
     const { messages, projectFocus, sessionId, userId, userProfile } = await request.json();
 
-    console.log("[BRAINSTEM_API] Request received. OpenRouter key configured:", !!OPENROUTER_API_KEY);
-    console.log("[BRAINSTEM_API] Supabase admin configured:", !!supabaseAdmin);
-
     if (!OPENROUTER_API_KEY) {
-      console.error("[BRAINSTEM_API] OPENROUTER_API_KEY is missing");
       return NextResponse.json(
         { error: "OpenRouter API key not configured" },
         { status: 500 }
       );
     }
 
-    const systemMessage = buildSystemPrompt(userProfile, projectFocus);
+    const systemPrompt = buildSystemPrompt(userProfile, projectFocus);
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-        "X-Title": "GPSpark",
-      },
-      body: JSON.stringify({
-        model: "ring-2.6-1t:free",
-        messages: [
-          { role: "system", content: systemMessage },
-          ...messages.map((msg: { role: string; content: string }) => ({
-            role: msg.role,
-            content: msg.content,
-          })),
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-        stream: true,
-      }),
-    });
+    const response = await fetchWithRetry(messages, systemPrompt);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[BRAINSTEM_API] OpenRouter error status:", response.status);
-      console.error("[BRAINSTEM_API] OpenRouter error body:", errorText);
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: `OpenRouter API error (${response.status}): ${errorText.slice(0, 200)}` },
+        { error: errorData.error?.message || "Failed to get AI response" },
         { status: response.status }
       );
     }
 
-    const reader = response.body?.getReader();
-    if (!reader) {
-      return NextResponse.json(
-        { error: "No response stream" },
-        { status: 500 }
-      );
-    }
-
-    const decoder = new TextDecoder();
-    let fullContent = "";
-    let currentSessionId = sessionId;
-
     const stream = new ReadableStream({
       async start(controller) {
-        const encoder = new TextEncoder();
-        
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = "";
+
         try {
           while (true) {
             const { done, value } = await reader.read();
@@ -115,13 +115,16 @@ export async function POST(request: Request) {
             const lines = chunk.split("\n");
 
             for (const line of lines) {
-              if (line.startsWith("data: ") && line !== "data: [DONE]") {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6);
+                if (data === "[DONE]") continue;
+
                 try {
-                  const parsed = JSON.parse(line.slice(6));
-                  const content = parsed.choices?.[0]?.delta?.content || "";
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content;
                   if (content) {
                     fullContent += content;
-                    controller.enqueue(encoder.encode(content));
+                    controller.enqueue(new TextEncoder().encode(content));
                   }
                 } catch (e) {
                   // Skip malformed JSON
@@ -129,11 +132,15 @@ export async function POST(request: Request) {
               }
             }
           }
+        } finally {
+          reader.releaseLock();
+          controller.close();
 
           // Save to database after stream completes
           if (supabaseAdmin && userId && fullContent) {
+            let currentSessionId = sessionId;
             if (!currentSessionId) {
-              const { data: sessionData, error: sessionError } = await supabaseAdmin
+              const { data: sessionData } = await supabaseAdmin
                 .from("brainstorm_sessions")
                 .insert({
                   user_id: userId,
@@ -142,41 +149,27 @@ export async function POST(request: Request) {
                 .select()
                 .single();
 
-              if (sessionError) {
-                console.error("[BRAINSTEM_API] Error creating session:", sessionError);
-              } else {
-                currentSessionId = sessionData.id;
-              }
+              if (sessionData) currentSessionId = sessionData.id;
             }
 
             if (currentSessionId) {
-              // Only save the LAST user message (the one just sent)
               const lastUserMessage = messages.filter((m: any) => m.role === "user").pop();
               if (lastUserMessage) {
-                await supabaseAdmin
-                  .from("chat_messages")
-                  .insert({
-                    session_id: currentSessionId,
-                    role: lastUserMessage.role,
-                    content: lastUserMessage.content,
-                  });
+                await supabaseAdmin.from("chat_messages").insert({
+                  session_id: currentSessionId,
+                  role: lastUserMessage.role,
+                  content: lastUserMessage.content,
+                });
               }
 
-              // Save assistant response
-              await supabaseAdmin
-                .from("chat_messages")
-                .insert({
-                  session_id: currentSessionId,
-                  role: "assistant",
-                  content: fullContent,
-                });
+              await supabaseAdmin.from("chat_messages").insert({
+                session_id: currentSessionId,
+                role: "assistant",
+                content: fullContent,
+              });
             }
           }
-        } catch (error) {
-          console.error("[BRAINSTEM_API] Stream error:", error);
-          controller.error(error);
         }
-        controller.close();
       },
     });
 
@@ -190,7 +183,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[BRAINSTEM_API] Error:", error);
     return NextResponse.json(
-      { error: "Failed to process request" },
+      { error: error instanceof Error ? error.message : "Failed to process request" },
       { status: 500 }
     );
   }

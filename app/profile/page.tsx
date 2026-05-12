@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
@@ -9,7 +9,8 @@ import { ProtectedRoute } from "@/components/protected-route";
 import { Footer } from "@/components/footer";
 import { useAuth } from "@/contexts/auth-context";
 import { useNotification } from "@/contexts/notification-context";
-import { User, Mail, GraduationCap, BookOpen, Target, Edit2, Save, X, LogOut, AlertCircle, CheckCircle2 } from "lucide-react";
+import { User, Mail, GraduationCap, BookOpen, Target, Edit2, Save, X, LogOut, AlertCircle, CheckCircle2, Camera, Loader2 } from "lucide-react";
+import { uploadAvatar, validateFile } from "@/lib/upload";
 
 export default function Profile() {
   const { user, signOut, updateProfile, supabaseUser, updateAuthEmail } = useAuth();
@@ -24,6 +25,10 @@ export default function Profile() {
     careerGoals: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [authEmail, setAuthEmail] = useState("");
   const [newAuthEmail, setNewAuthEmail] = useState("");
@@ -123,6 +128,43 @@ export default function Profile() {
     setEmailStatus(null);
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const validation = validateFile(file, {
+      maxSizeMB: 5,
+      allowedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+    });
+
+    if (!validation.valid) {
+      addNotification("error", "Invalid File", validation.error || "Invalid file");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setAvatarPreview(URL.createObjectURL(file));
+
+    const { url, error } = await uploadAvatar(user.id, file);
+
+    if (error) {
+      addNotification("error", "Upload Failed", error);
+      setAvatarPreview(null);
+    } else if (url) {
+      await updateProfile({ avatarUrl: url });
+      addNotification("success", "Avatar Updated", "Your profile picture has been updated.");
+    }
+
+    setIsUploadingAvatar(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const interestOptions = ["AI & ML", "Web Dev", "Cybersecurity", "Mobile Apps", "Big Data", "Cloud Systems"];
 
   if (!user) {
@@ -195,8 +237,36 @@ export default function Profile() {
               {/* Profile Card */}
               <div className="lg:col-span-1">
                 <div className="bg-white rounded-xl border border-slate-200 p-6 text-center">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
-                    {user.fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                  <div className="relative w-24 h-24 mx-auto mb-4">
+                    {avatarPreview || user.avatarUrl ? (
+                      <img
+                        src={avatarPreview || user.avatarUrl || ""}
+                        alt={user.fullName}
+                        className="w-24 h-24 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold">
+                        {user.fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                      </div>
+                    )}
+                    <button
+                      onClick={handleAvatarClick}
+                      disabled={isUploadingAvatar}
+                      className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                    >
+                      {isUploadingAvatar ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Camera className="h-4 w-4" />
+                      )}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
                   </div>
                   <h2 className="text-xl font-bold text-slate-900">{user.fullName}</h2>
                   <p className="text-slate-500 text-sm mt-1">{user.academicYear}</p>

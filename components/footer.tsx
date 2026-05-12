@@ -10,7 +10,7 @@ export function Footer() {
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="GPSpark Logo" className="w-6 h-6" />
+            <img src="/logo.png" alt="GPSpark Logo" className="w-6 h-6" />
             <div>
               <span className="text-sm font-bold text-slate-900">GPSpark</span>
               <span className="text-slate-500 text-xs ml-2">FCAI-CU {currentYear}</span>

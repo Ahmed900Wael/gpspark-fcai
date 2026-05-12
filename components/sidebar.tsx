@@ -21,7 +21,7 @@ export function Sidebar({ activePage }: SidebarProps) {
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Brainstorm AI", href: "/brainstorm", icon: Brain },
     { label: "Milestones", href: "/milestones", icon: Flag },
-    { label: "Mentors", href: "/mentors", icon: GraduationCap },
+    { label: "Mentors", href: "/mentors", icon: GraduationCap, disabled: true },
     { label: "GP Library", href: "/library", icon: Library },
     { label: "Team Search", href: "/team", icon: Users },
   ];
@@ -58,7 +58,7 @@ export function Sidebar({ activePage }: SidebarProps) {
       }`}>
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="GPSpark Logo" className="w-10 h-10" />
+            <img src="/logo.png" alt="GPSpark Logo" className="w-10 h-10" />
             <div>
               <div className="text-sm font-semibold text-slate-900">GPSpark</div>
               <div className="text-xs text-slate-500">Graduation Project</div>
@@ -67,23 +67,37 @@ export function Sidebar({ activePage }: SidebarProps) {
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                activePage === item.href
-                  ? "bg-blue-50 text-blue-900"
-                  : "text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className={`text-sm ${activePage === item.href ? "font-semibold" : "font-medium"}`}>
-                {item.label}
-              </span>
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            if (item.disabled) {
+              return (
+                <div
+                  key={item.href}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 cursor-not-allowed"
+                  title="Coming soon"
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </div>
+              );
+            }
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  activePage === item.href
+                    ? "bg-blue-50 text-blue-900"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <item.icon className="h-5 w-5" />
+                <span className={`text-sm ${activePage === item.href ? "font-semibold" : "font-medium"}`}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="p-4 space-y-1 border-t border-slate-200">

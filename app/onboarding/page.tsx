@@ -16,7 +16,7 @@ export default function Onboarding() {
       {/* Header */}
       <div className="flex flex-col items-center pt-12 pb-8">
         <div className="flex h-16 w-16 items-center justify-center mb-6">
-          <img src="/logo.svg" alt="GPSpark Logo" className="w-16 h-16" />
+          <img src="/logo.png" alt="GPSpark Logo" className="w-16 h-16" />
         </div>
         <p className="text-slate-600 text-lg">
           Your journey toward a premium graduation project starts here.

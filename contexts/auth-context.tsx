@@ -20,6 +20,7 @@ interface AuthContextType {
   user: UserProfile | null;
   supabaseUser: User | null;
   session: Session | null;
+  supabase: typeof import("@/lib/supabase").supabase;
   isAuthenticated: boolean;
   isLoading: boolean;
   signUp: (email: string, password: string, profile: Partial<UserProfile>) => Promise<{ error: string | null }>;
@@ -309,6 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         supabaseUser,
         session,
+        supabase,
         isAuthenticated: !!supabaseUser,
         isLoading,
         signUp,

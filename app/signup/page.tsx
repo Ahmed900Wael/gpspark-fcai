@@ -66,7 +66,7 @@ export default function SignUp() {
             Back to Home
           </Link>
           <div className="flex justify-center mb-4">
-            <img src="/logo.svg" alt="GPSpark Logo" className="w-16 h-16" />
+            <img src="/logo.png" alt="GPSpark Logo" className="w-16 h-16" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Create Your Account</h1>
           <p className="text-slate-600 mt-2">Join GPSpark and start your journey</p>

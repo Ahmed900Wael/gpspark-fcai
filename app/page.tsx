@@ -11,7 +11,7 @@ export default function Home() {
       <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="GPSpark Logo" className="w-8 h-8" />
+            <img src="/logo.png" alt="GPSpark Logo" className="w-8 h-8" />
             <span className="text-xl font-bold text-slate-900">GPSpark</span>
           </div>
 
@@ -233,9 +233,6 @@ export default function Home() {
                   Create Free Account
                 </Button>
               </Link>
-              <Button variant="outline" className="border-white text-slate-900 hover:bg-transparent hover:text-white cursor-pointer px-8 py-5 text-base">
-                Talk to an Advisor
-              </Button>
             </div>
           </div>
         </div>
@@ -246,7 +243,7 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6 py-12">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
-              <img src="/logo.svg" alt="GPSpark Logo" className="w-8 h-8" />
+<img src="/logo.png" alt="GPSpark Logo" className="w-8 h-8" />
               <div>
                 <span className="text-lg font-bold text-slate-900">GPSpark</span>
                 <span className="text-slate-500 text-sm ml-2">FCAI-CU 2026</span>

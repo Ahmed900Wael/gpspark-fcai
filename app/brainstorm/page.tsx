@@ -11,11 +11,13 @@ import { useNotification } from "@/contexts/notification-context";
 import { supabase } from "@/lib/supabase";
 import { 
   Brain, Send, Paperclip, MoreVertical, User, 
-  AlertTriangle, Battery, BarChart3, FileText, Loader2, Plus, MessageSquare, Trash2, Sparkles
+  AlertTriangle, Battery, BarChart3, FileText, Loader2, Plus, MessageSquare, Trash2, Sparkles, Globe
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface Message {
   id: string;
@@ -28,6 +30,17 @@ interface BrainstormSession {
   id: string;
   project_focus: string;
   created_at: string;
+}
+
+interface MarketGap {
+  title: string;
+  description: string;
+}
+
+interface TechnicalChallenge {
+  title: string;
+  description: string;
+  severity: "high" | "medium" | "low";
 }
 
 function formatTimeAgo(dateString: string): string {
@@ -45,34 +58,6 @@ function formatTimeAgo(dateString: string): string {
   if (diffDay < 7) return `${diffDay}d ago`;
   return date.toLocaleDateString();
 }
-
-const marketGaps = [
-  {
-    title: "Low-cost LoRaWAN sensors",
-    description: "Current solutions target enterprise agriculture; local community garden tier is unserved.",
-    icon: "🌐",
-  },
-  {
-    title: "Simplified Data viz",
-    description: "Existing dashboards are too technical for casual urban farmers.",
-    icon: "",
-  },
-];
-
-const technicalChallenges = [
-  {
-    title: "Signal Attenuation",
-    description: "Urban concrete density may interfere with LoRa signals. Test sites required.",
-    severity: "high",
-    icon: AlertTriangle,
-  },
-  {
-    title: "Battery Longevity",
-    description: "Remote nodes must last 1+ years without maintenance in varied weather.",
-    severity: "medium",
-    icon: Battery,
-  },
-];
 
 const SUGGESTION_PHASES = {
   welcome: [
@@ -134,6 +119,31 @@ export default function BrainstormAI() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const [hasWelcomed, setHasWelcomed] = useState(false);
+  const [feasibilityData, setFeasibilityData] = useState<{
+    score: number;
+    breakdown: {
+      technicalDepth: number;
+      marketAnalysis: number;
+      implementationPlan: number;
+      innovation: number;
+      resourceFeasibility: number;
+    };
+    feedback: string;
+  }>({
+    score: 20,
+    breakdown: {
+      technicalDepth: 5,
+      marketAnalysis: 5,
+      implementationPlan: 5,
+      innovation: 5,
+      resourceFeasibility: 5,
+    },
+    feedback: "Start discussing your project idea to get a feasibility assessment.",
+  });
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [marketGaps, setMarketGaps] = useState<MarketGap[]>([]);
+  const [technicalChallenges, setTechnicalChallenges] = useState<TechnicalChallenge[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const userProfile = user ? {
@@ -379,6 +389,247 @@ export default function BrainstormAI() {
     }
   };
 
+  const fetchFeasibility = async () => {
+    if (messages.length < 2 || isAnalyzing) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const response = await fetch("/api/brainstorm/feasibility", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFeasibilityData(data);
+      }
+    } catch (error) {
+      console.error("[CLIENT] Feasibility analysis error:", error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const fetchAnalysis = async () => {
+    if (messages.length < 2) return;
+    
+    try {
+      const response = await fetch("/api/brainstorm/analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMarketGaps(data.marketGaps || []);
+        setTechnicalChallenges(data.technicalChallenges || []);
+      }
+    } catch (error) {
+      console.error("[CLIENT] Analysis error:", error);
+    }
+  };
+
+  // Fetch feasibility and analysis after messages change (debounced)
+  useEffect(() => {
+    if (messages.length >= 2) {
+      const timer = setTimeout(() => {
+        fetchFeasibility();
+        fetchAnalysis();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [messages.length]);
+
+  const exportResearchSummary = async () => {
+    if (messages.length === 0) return;
+    
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      const contentWidth = pageWidth - margin * 2;
+      let y = 20;
+
+      // Header
+      doc.setFillColor(30, 58, 138);
+      doc.rect(0, 0, pageWidth, 45, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont("helvetica", "bold");
+      doc.text("GPSpark Research Summary", margin, 22);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, margin, 32);
+      doc.text(`Session: ${currentSessionId ? "Active Brainstorm Session" : "New Session"}`, margin, 38);
+      
+      y = 55;
+      doc.setTextColor(30, 30, 30);
+
+      // Feasibility Score Section
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("Feasibility Assessment", margin, y);
+      y += 10;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(feasibilityScore >= 70 ? 22 : feasibilityScore >= 40 ? 245 : 220, 
+                       feasibilityScore >= 70 ? 163 : feasibilityScore >= 40 ? 158 : 38, 
+                       feasibilityScore >= 70 ? 74 : feasibilityScore >= 40 ? 11 : 38);
+      doc.text(`Overall Score: ${feasibilityScore}%`, margin, y);
+      y += 8;
+
+      doc.setTextColor(80, 80, 80);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      const feedbackLines = doc.splitTextToSize(feasibilityData.feedback, contentWidth);
+      doc.text(feedbackLines, margin, y);
+      y += feedbackLines.length * 6 + 5;
+
+      // Breakdown table
+      const breakdownData = [
+        ["Technical Depth", `${feasibilityData.breakdown.technicalDepth}/20`],
+        ["Market Analysis", `${feasibilityData.breakdown.marketAnalysis}/20`],
+        ["Implementation Plan", `${feasibilityData.breakdown.implementationPlan}/20`],
+        ["Innovation", `${feasibilityData.breakdown.innovation}/20`],
+        ["Resource Feasibility", `${feasibilityData.breakdown.resourceFeasibility}/20`],
+      ];
+
+      autoTable(doc, {
+        startY: y,
+        head: [["Criteria", "Score"]],
+        body: breakdownData,
+        theme: "striped",
+        headStyles: { fillColor: [30, 58, 138], textColor: 255, fontStyle: "bold" },
+        styles: { fontSize: 9, cellPadding: 4 },
+        margin: { left: margin, right: margin },
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 15;
+
+      // Market Gaps Section
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 30, 30);
+      doc.text("Market Gaps Identified", margin, y);
+      y += 10;
+
+      if (marketGaps.length > 0) {
+        const marketGapData = marketGaps.map(gap => [gap.title, gap.description]);
+        autoTable(doc, {
+          startY: y,
+          head: [["Gap", "Description"]],
+          body: marketGapData,
+          theme: "striped",
+          headStyles: { fillColor: [22, 163, 74], textColor: 255, fontStyle: "bold" },
+          styles: { fontSize: 9, cellPadding: 4 },
+          columnStyles: { 0: { cellWidth: 50, fontStyle: "bold" }, 1: { cellWidth: contentWidth - 50 } },
+          margin: { left: margin, right: margin },
+        });
+        y = (doc as any).lastAutoTable.finalY + 15;
+      } else {
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(120, 120, 120);
+        doc.text("No specific market gaps identified yet.", margin, y);
+        y += 15;
+      }
+
+      // Technical Challenges Section
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 30, 30);
+      doc.text("Technical Challenges", margin, y);
+      y += 10;
+
+      if (technicalChallenges.length > 0) {
+        const challengeData = technicalChallenges.map(ch => [
+          ch.title,
+          ch.severity.toUpperCase(),
+          ch.description
+        ]);
+        autoTable(doc, {
+          startY: y,
+          head: [["Challenge", "Severity", "Description"]],
+          body: challengeData,
+          theme: "striped",
+          headStyles: { fillColor: [220, 38, 38], textColor: 255, fontStyle: "bold" },
+          styles: { fontSize: 9, cellPadding: 4 },
+          columnStyles: { 
+            0: { cellWidth: 45, fontStyle: "bold" }, 
+            1: { cellWidth: 25, halign: "center" },
+            2: { cellWidth: contentWidth - 70 } 
+          },
+          margin: { left: margin, right: margin },
+        });
+        y = (doc as any).lastAutoTable.finalY + 15;
+      } else {
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(120, 120, 120);
+        doc.text("No specific technical challenges identified yet.", margin, y);
+        y += 15;
+      }
+
+      // Conversation Log Section
+      if (y > 240) { doc.addPage(); y = 20; }
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 30, 30);
+      doc.text("Conversation Log", margin, y);
+      y += 10;
+
+      const conversationData = messages.map(msg => [
+        msg.role === "user" ? "You" : "AI",
+        msg.time,
+        msg.content.length > 200 ? msg.content.substring(0, 200) + "..." : msg.content
+      ]);
+
+      autoTable(doc, {
+        startY: y,
+        head: [["Role", "Time", "Message"]],
+        body: conversationData,
+        theme: "striped",
+        headStyles: { fillColor: [30, 58, 138], textColor: 255, fontStyle: "bold" },
+        styles: { fontSize: 8, cellPadding: 3, overflow: "linebreak" },
+        columnStyles: { 
+          0: { cellWidth: 15, fontStyle: "bold" }, 
+          1: { cellWidth: 20 },
+          2: { cellWidth: contentWidth - 35 } 
+        },
+        margin: { left: margin, right: margin },
+        alternateRowStyles: { fillColor: [245, 247, 250] },
+      });
+
+      // Footer on all pages
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          `Generated by GPSpark AI • Powered by OpenRouter • Page ${i} of ${totalPages}`,
+          pageWidth / 2,
+          doc.internal.pageSize.getHeight() - 10,
+          { align: "center" }
+        );
+      }
+
+      doc.save(`gpspark-research-summary-${new Date().toISOString().split('T')[0]}.pdf`);
+      addNotification("success", "Export Complete", "Research summary downloaded as PDF.");
+    } catch (error) {
+      console.error("[CLIENT] Export error:", error);
+      addNotification("error", "Export Failed", "Could not generate research summary.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const lastMessage = messages[messages.length - 1];
   const suggestions = getSuggestions(
     messages.length,
@@ -386,8 +637,8 @@ export default function BrainstormAI() {
     user?.interests || []
   );
 
-  // Calculate feasibility score based on conversation progress
-  const feasibilityScore = Math.min(95, 20 + (messages.length * 8));
+  // Use API data for feasibility
+  const feasibilityScore = feasibilityData.score;
   const feasibilityColor = feasibilityScore >= 70 ? "#16a34a" : feasibilityScore >= 40 ? "#f59e0b" : "#dc2626";
   const feasibilityLabel = feasibilityScore >= 70 ? "High Potential" : feasibilityScore >= 40 ? "Moderate" : "Needs Work";
   const circumference = 2 * Math.PI * 45;
@@ -642,11 +893,6 @@ export default function BrainstormAI() {
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   </Button>
                 </div>
-                <div className="text-center mt-3">
-                  <span className="text-xs text-slate-400 uppercase tracking-wide">
-                    Powered by OpenRouter AI • Free Tier
-                  </span>
-                </div>
               </div>
             </div>
 
@@ -656,7 +902,14 @@ export default function BrainstormAI() {
             <div className="p-6 border-b border-slate-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-slate-900">Project Feasibility</h3>
-                <BarChart3 className="h-5 w-5 text-slate-400" />
+                <button
+                  onClick={fetchFeasibility}
+                  disabled={isAnalyzing || messages.length < 2}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Re-analyze feasibility"
+                >
+                  {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-5 w-5" />}
+                </button>
               </div>
               <div className="flex justify-center mb-4">
                 <div className="relative w-32 h-32">
@@ -681,14 +934,34 @@ export default function BrainstormAI() {
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-slate-600 text-center">
-                {feasibilityScore >= 70 
-                  ? "Your project scores high on novelty and social impact."
-                  : feasibilityScore >= 40
-                  ? "Keep refining your idea to improve feasibility."
-                  : "Share more details to get a better assessment."
-                }
+              <p className="text-sm text-slate-600 text-center mb-4">
+                {feasibilityData.feedback}
               </p>
+
+              {/* Breakdown */}
+              <div className="space-y-2">
+                {[
+                  { label: "Technical Depth", value: feasibilityData.breakdown.technicalDepth, max: 20 },
+                  { label: "Market Analysis", value: feasibilityData.breakdown.marketAnalysis, max: 20 },
+                  { label: "Implementation", value: feasibilityData.breakdown.implementationPlan, max: 20 },
+                  { label: "Innovation", value: feasibilityData.breakdown.innovation, max: 20 },
+                  { label: "Resource Feasibility", value: feasibilityData.breakdown.resourceFeasibility, max: 20 },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500 w-28 truncate">{item.label}</span>
+                    <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${(item.value / item.max) * 100}%`,
+                          backgroundColor: item.value >= 14 ? "#16a34a" : item.value >= 8 ? "#f59e0b" : "#dc2626",
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs text-slate-600 w-8 text-right">{item.value}/{item.max}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Market Gaps */}
@@ -696,21 +969,27 @@ export default function BrainstormAI() {
               <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
                 Market Gaps Identified
               </h4>
-              <div className="space-y-3">
-                {marketGaps.map((gap, index) => (
-                  <div key={index} className="bg-white rounded-xl border border-slate-200 p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-lg">
-                        {gap.icon}
-                      </div>
-                      <div>
-                        <h5 className="text-sm font-semibold text-slate-900">{gap.title}</h5>
-                        <p className="text-xs text-slate-600 mt-1">{gap.description}</p>
+              {marketGaps.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-4">
+                  Discuss your project idea to identify market opportunities.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {marketGaps.map((gap, index) => (
+                    <div key={index} className="bg-white rounded-xl border border-slate-200 p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                          <Globe className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <h5 className="text-sm font-semibold text-slate-900">{gap.title}</h5>
+                          <p className="text-xs text-slate-600 mt-1">{gap.description}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Technical Challenges */}
@@ -718,46 +997,60 @@ export default function BrainstormAI() {
               <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
                 Technical Challenges
               </h4>
-              <div className="space-y-3">
-                {technicalChallenges.map((challenge, index) => (
-                  <div 
-                    key={index} 
-                    className={`bg-white rounded-xl border-l-4 p-4 ${
-                      challenge.severity === "high" ? "border-l-red-500" : "border-l-amber-500"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <challenge.icon className={`h-4 w-4 ${
-                          challenge.severity === "high" ? "text-red-600" : "text-amber-600"
-                        }`} />
-                        <h5 className={`text-sm font-semibold ${
-                          challenge.severity === "high" ? "text-red-700" : "text-amber-700"
+              {technicalChallenges.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-4">
+                  Discuss your project idea to identify technical hurdles.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {technicalChallenges.map((challenge, index) => (
+                    <div 
+                      key={index} 
+                      className={`bg-white rounded-xl border-l-4 p-4 ${
+                        challenge.severity === "high" ? "border-l-red-500" : 
+                        challenge.severity === "medium" ? "border-l-amber-500" : "border-l-blue-500"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className={`h-4 w-4 ${
+                            challenge.severity === "high" ? "text-red-600" : 
+                            challenge.severity === "medium" ? "text-amber-600" : "text-blue-600"
+                          }`} />
+                          <h5 className={`text-sm font-semibold ${
+                            challenge.severity === "high" ? "text-red-700" : 
+                            challenge.severity === "medium" ? "text-amber-700" : "text-blue-700"
+                          }`}>
+                            {challenge.title}
+                          </h5>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          challenge.severity === "high" ? "bg-red-100 text-red-700" : 
+                          challenge.severity === "medium" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
                         }`}>
-                          {challenge.title}
-                        </h5>
+                          {challenge.severity}
+                        </span>
                       </div>
-                      {challenge.severity === "high" && (
-                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                      )}
+                      <p className="text-xs text-slate-600">{challenge.description}</p>
                     </div>
-                    <p className="text-xs text-slate-600">{challenge.description}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Export Button */}
             <div className="p-6">
-              <Button className="w-full bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 cursor-pointer">
-                <FileText className="h-4 w-4 mr-2" />
+              <Button 
+                onClick={exportResearchSummary}
+                disabled={isExporting || messages.length === 0}
+                className="w-full bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isExporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
                 Export Research Summary
               </Button>
             </div>
           </aside>
         </div>
-
-        <Footer />
       </div>
     </div>
     </ProtectedRoute>
