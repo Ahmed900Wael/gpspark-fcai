@@ -715,11 +715,6 @@ export default function BrainstormAI() {
                       <MessageSquare className="h-5 w-5" />
                     </button>
                     <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200">
-                          Powered by OpenRouter
-                        </span>
-                      </div>
                       <h1 className="text-xl md:text-2xl font-bold text-slate-900">
                         {currentSessionId ? "Brainstorming Session" : "New Session"}
                       </h1>
@@ -743,9 +738,6 @@ export default function BrainstormAI() {
                       <Plus className="h-4 w-4 mr-2" />
                       New Session
                     </Button>
-                    <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-600">
-                      <MoreVertical className="h-5 w-5" />
-                    </button>
                   </div>
                 </div>
               </div>
