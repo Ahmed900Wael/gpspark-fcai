@@ -148,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: {
             full_name: profile.fullName,
           },
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/dashboard`,
         },
       });
 
@@ -306,6 +307,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.resend({
         type: "signup",
         email,
+        options: {
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/dashboard`,
+        },
       });
 
       if (error) {
