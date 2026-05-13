@@ -1,12 +1,32 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Brain, BarChart3, Users, MessageSquare, Shield, TrendingUp, Library, Search } from "lucide-react";
+import { ArrowRight, Brain, BarChart3, Users, MessageSquare, Shield, TrendingUp, Library, Search, Command } from "lucide-react";
+import { CommandPalette } from "@/components/command-palette";
 
 const currentYear = new Date().getFullYear();
 
 export default function Home() {
+  const [commandOpen, setCommandOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandOpen((prev) => !prev);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white">
+      <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
+
       {/* Navigation */}
       <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
@@ -16,14 +36,14 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
-              <Search className="h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search projects..."
-                className="bg-transparent text-sm outline-none w-40"
-              />
-            </div>
+            <button
+              onClick={() => setCommandOpen(true)}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-colors"
+            >
+              <Search className="h-4 w-4" />
+              <span className="text-sm">Search projects...</span>
+              <kbd className="ml-2 px-1.5 py-0.5 rounded bg-white border border-slate-200 text-xs font-mono">Ctrl K</kbd>
+            </button>
             <Link href="/signin">
               <Button className="bg-blue-900 hover:bg-blue-800 text-white cursor-pointer">
                 Sign In

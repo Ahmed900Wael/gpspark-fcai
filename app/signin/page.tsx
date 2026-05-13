@@ -10,13 +10,27 @@ import { ArrowLeft, Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 export default function SignIn() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, resendConfirmationEmail } = useAuth();
   const { addNotification } = useNotification();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showResendOption, setShowResendOption] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+
+  const handleResendConfirmation = async () => {
+    setResendLoading(true);
+    setError("");
+    const { error: resendError } = await resendConfirmationEmail(email);
+    if (resendError) {
+      setError(resendError);
+    } else {
+      addNotification("success", "Email Sent!", "A new confirmation link has been sent to your email.");
+    }
+    setResendLoading(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +45,9 @@ export default function SignIn() {
       console.log("[CLIENT] Sign in failed:", authError);
       setError(authError);
       setIsLoading(false);
+      if (authError.toLowerCase().includes("email") && authError.toLowerCase().includes("confirm")) {
+        setShowResendOption(true);
+      }
     } else {
       console.log("[CLIENT] Sign in successful, waiting for session sync...");
       addNotification("success", "Welcome Back!", "You have signed in successfully.");
@@ -58,15 +75,30 @@ export default function SignIn() {
         {/* Form */}
         <div className="bg-white rounded-xl border border-slate-200 p-8">
           {error && (
-            <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-              {error}
+            <div className="mb-6">
+              <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {error}
+              </div>
+              {showResendOption && (
+                <div className="mt-3 p-4 rounded-lg bg-blue-50 border border-blue-200">
+                  <p className="text-sm text-blue-800 mb-2">Didn't receive the confirmation email?</p>
+                  <button
+                    type="button"
+                    onClick={handleResendConfirmation}
+                    disabled={resendLoading}
+                    className="text-sm text-blue-600 hover:underline font-medium disabled:opacity-50"
+                  >
+                    {resendLoading ? "Sending..." : "Resend confirmation email"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                University Email
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                Email
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -74,7 +106,7 @@ export default function SignIn() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="j.doe@fcai.edu"
+                  placeholder="you@example.com"
                   required
                   className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />

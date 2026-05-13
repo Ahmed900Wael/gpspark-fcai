@@ -10,9 +10,12 @@ interface UserProfile {
   universityEmail: string;
   gpa: string;
   academicYear: string;
+  department: string;
   interests: string[];
   careerGoals: string;
   avatarUrl?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
   createdAt: string;
 }
 
@@ -29,6 +32,7 @@ interface AuthContextType {
   updateProfile: (profile: Partial<UserProfile>) => Promise<{ error: string | null }>;
   getUserProfile: (userId: string) => Promise<UserProfile | null>;
   updateAuthEmail: (newEmail: string) => Promise<{ error: string | null; requiresConfirmation: boolean }>;
+  resendConfirmationEmail: (email: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -115,9 +119,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           universityEmail: data.university_email,
           gpa: data.gpa || "",
           academicYear: data.academic_year || "",
+          department: data.department || "",
           interests: data.interests || [],
           careerGoals: data.career_goals || "",
           avatarUrl: data.avatar_url,
+          linkedinUrl: data.linkedin_url,
+          githubUrl: data.github_url,
           createdAt: data.created_at,
         };
         console.log("[SERVER] User profile loaded:", profile);
@@ -158,8 +165,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             university_email: profile.universityEmail || email,
             gpa: profile.gpa || "",
             academic_year: profile.academicYear || "",
+            department: profile.department || "",
             interests: profile.interests || [],
             career_goals: profile.careerGoals || "",
+            linkedin_url: profile.linkedinUrl || "",
+            github_url: profile.githubUrl || "",
           })
           .eq("id", data.user.id);
 
@@ -231,9 +241,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           university_email: profile.universityEmail,
           gpa: profile.gpa,
           academic_year: profile.academicYear,
+          department: profile.department,
           interests: profile.interests,
           career_goals: profile.careerGoals,
           avatar_url: profile.avatarUrl,
+          linkedin_url: profile.linkedinUrl,
+          github_url: profile.githubUrl,
         })
         .eq("id", supabaseUser.id);
 
@@ -273,14 +286,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         universityEmail: data.university_email,
         gpa: data.gpa || "",
         academicYear: data.academic_year || "",
+        department: data.department || "",
         interests: data.interests || [],
         careerGoals: data.career_goals || "",
         avatarUrl: data.avatar_url,
+        linkedinUrl: data.linkedin_url,
+        githubUrl: data.github_url,
         createdAt: data.created_at,
       };
     } catch (err) {
       console.error("[SERVER] Error fetching user profile:", err);
       return null;
+    }
+  };
+
+  const resendConfirmationEmail = async (email: string) => {
+    try {
+      console.log("[SERVER] Resending confirmation email to:", email);
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+      });
+
+      if (error) {
+        console.error("[SERVER] Resend confirmation error:", error.message);
+        return { error: error.message };
+      }
+
+      console.log("[SERVER] Confirmation email resent successfully");
+      return { error: null };
+    } catch (err) {
+      console.error("[SERVER] Resend confirmation error:", err);
+      return { error: "An unexpected error occurred" };
     }
   };
 
@@ -319,6 +356,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateProfile,
         getUserProfile,
         updateAuthEmail,
+        resendConfirmationEmail,
       }}
     >
       {children}

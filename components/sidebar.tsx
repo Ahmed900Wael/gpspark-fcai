@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { 
   LayoutDashboard, Brain, Flag, GraduationCap, Library, Users, Settings, 
-  HelpCircle, Plus, Menu, X, User, LogOut
+  HelpCircle, Plus, Menu, X, User, LogOut, FolderOpen
 } from "lucide-react";
 
 interface SidebarProps {
@@ -20,10 +20,11 @@ export function Sidebar({ activePage }: SidebarProps) {
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Brainstorm AI", href: "/brainstorm", icon: Brain },
+    { label: "My Projects", href: "/projects", icon: FolderOpen },
     { label: "Milestones", href: "/milestones", icon: Flag },
-    { label: "Mentors", href: "/mentors", icon: GraduationCap, disabled: true },
     { label: "GP Library", href: "/library", icon: Library },
     { label: "Team Search", href: "/team", icon: Users },
+    { label: "Mentors", href: "/mentors", icon: GraduationCap, disabled: true },
   ];
 
   const handleLogout = async () => {
@@ -57,13 +58,13 @@ export function Sidebar({ activePage }: SidebarProps) {
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}>
         <div className="p-6 border-b border-slate-200">
-          <div className="flex items-center gap-3">
+          <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-3 cursor-pointer group">
             <img src="/logo.png" alt="GPSpark Logo" className="w-10 h-10" />
             <div>
-              <div className="text-sm font-semibold text-slate-900">GPSpark</div>
+              <div className="text-sm font-semibold text-slate-900 group-hover:text-blue-900 transition-colors">GPSpark</div>
               <div className="text-xs text-slate-500">Graduation Project</div>
             </div>
-          </div>
+          </Link>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -101,10 +102,12 @@ export function Sidebar({ activePage }: SidebarProps) {
         </nav>
 
         <div className="p-4 space-y-1 border-t border-slate-200">
-          <Button className="w-full bg-blue-900 hover:bg-blue-800 text-white mb-2">
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
+          <Link href="/projects" className="w-full block mb-2">
+            <Button className="w-full bg-blue-900 hover:bg-blue-800 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              New Project
+            </Button>
+          </Link>
           <Link
             href="/profile"
             onClick={() => setIsOpen(false)}
@@ -116,14 +119,6 @@ export function Sidebar({ activePage }: SidebarProps) {
           >
             <User className="h-5 w-5" />
             <span className="text-sm font-medium">My Profile</span>
-          </Link>
-          <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Settings className="h-5 w-5" />
-            <span className="text-sm font-medium">Settings</span>
-          </Link>
-          <Link href="/support" className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <HelpCircle className="h-5 w-5" />
-            <span className="text-sm font-medium">Support</span>
           </Link>
           <button
             onClick={handleLogout}

@@ -13,7 +13,8 @@ import {
   Search, Filter, Calendar, Star, ArrowRight, Lightbulb,
   User, ChevronDown, Loader2, Heart
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 interface LibraryProject {
   id: string;
@@ -28,10 +29,11 @@ interface LibraryProject {
   case_study_url: string | null;
 }
 
-export default function GPLibrary() {
-  const { supabase } = useAuth();
+function LibraryContent() {
+  const { supabase, user } = useAuth();
   const { addNotification } = useNotification();
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [selectedDomain, setSelectedDomain] = useState("All Domains");
   const [selectedYear, setSelectedYear] = useState("Release Year");
   const [activeTab, setActiveTab] = useState("all");
@@ -42,8 +44,8 @@ export default function GPLibrary() {
 
   useEffect(() => {
     loadProjects();
-    loadFavorites();
-  }, []);
+    if (user) loadFavorites();
+  }, [user]);
 
   const loadProjects = async () => {
     if (!supabase) return;
@@ -79,7 +81,11 @@ export default function GPLibrary() {
   };
 
   const toggleFavorite = async (projectId: string) => {
-    if (!supabase) return;
+    if (!supabase || !user) {
+      addNotification("error", "Authentication Required", "Please sign in to save favorites.");
+      return;
+    }
+
     setTogglingFavorite(projectId);
     try {
       const isFavorited = favorites.includes(projectId);
@@ -88,7 +94,8 @@ export default function GPLibrary() {
         const { error } = await supabase
           .from("project_favorites")
           .delete()
-          .eq("project_id", projectId);
+          .eq("project_id", projectId)
+          .eq("user_id", user.id);
         
         if (error) throw error;
         setFavorites(prev => prev.filter(id => id !== projectId));
@@ -96,9 +103,18 @@ export default function GPLibrary() {
       } else {
         const { error } = await supabase
           .from("project_favorites")
-          .insert({ project_id: projectId });
+          .insert({ 
+            user_id: user.id,
+            project_id: projectId 
+          });
         
-        if (error) throw error;
+        if (error) {
+          if (error.code === "23505") {
+            addNotification("error", "Already Saved", "This project is already in your favorites.");
+            return;
+          }
+          throw error;
+        }
         setFavorites(prev => [...prev, projectId]);
         addNotification("success", "Added", "Project added to favorites.");
       }
@@ -217,10 +233,6 @@ export default function GPLibrary() {
               </select>
               <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
             </div>
-            <Button variant="outline" className="border-slate-200">
-              <Filter className="h-4 w-4 mr-2" />
-              More Filters
-            </Button>
           </div>
 
           {isLoading ? (
@@ -316,10 +328,6 @@ export default function GPLibrary() {
                             <Heart className={`h-4 w-4 ${favorites.includes(project.id) ? "fill-current" : ""}`} />
                           )}
                         </button>
-                        <Button variant="ghost" className="text-blue-900 hover:text-blue-800 hover:bg-blue-50">
-                          View Case Study
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -333,5 +341,17 @@ export default function GPLibrary() {
       </div>
     </div>
     </ProtectedRoute>
+  );
+}
+
+export default function GPLibrary() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-blue-900 animate-spin" />
+      </div>
+    }>
+      <LibraryContent />
+    </Suspense>
   );
 }

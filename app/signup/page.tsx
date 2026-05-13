@@ -49,10 +49,10 @@ export default function SignUp() {
       setError(authError);
       setIsLoading(false);
     } else {
-      console.log("[CLIENT] Sign up successful, waiting for session sync...");
-      addNotification("success", "Welcome to GPSpark!", "Your account has been created. Complete your profile to get started.");
+      console.log("[CLIENT] Sign up successful, checking email confirmation...");
+      addNotification("success", "Check your email!", "We've sent you a confirmation link. Please verify your email to complete registration.");
       await new Promise(resolve => setTimeout(resolve, 500));
-      router.push("/profile");
+      router.push("/signin");
     }
   };
 
@@ -99,8 +99,8 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                University Email
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                Email
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -108,7 +108,7 @@ export default function SignUp() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="j.doe@fcai.edu"
+                  placeholder="you@example.com"
                   required
                   className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />

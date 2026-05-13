@@ -21,8 +21,11 @@ export default function Profile() {
     universityEmail: "",
     gpa: "",
     academicYear: "",
+    department: "",
     interests: [] as string[],
     careerGoals: "",
+    linkedinUrl: "",
+    githubUrl: "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -43,8 +46,11 @@ export default function Profile() {
         universityEmail: user.universityEmail,
         gpa: user.gpa,
         academicYear: user.academicYear,
+        department: user.department,
         interests: user.interests,
         careerGoals: user.careerGoals,
+        linkedinUrl: user.linkedinUrl || "",
+        githubUrl: user.githubUrl || "",
       });
       setAuthEmail(supabaseUser?.email || user.universityEmail);
     }
@@ -72,8 +78,11 @@ export default function Profile() {
         universityEmail: user.universityEmail,
         gpa: user.gpa,
         academicYear: user.academicYear,
+        department: user.department,
         interests: user.interests,
         careerGoals: user.careerGoals,
+        linkedinUrl: user.linkedinUrl || "",
+        githubUrl: user.githubUrl || "",
       });
     }
     setIsEditing(false);
@@ -165,7 +174,37 @@ export default function Profile() {
     }
   };
 
-  const interestOptions = ["AI & ML", "Web Dev", "Cybersecurity", "Mobile Apps", "Big Data", "Cloud Systems"];
+  const departmentOptions = [
+    "CS - Computer Science",
+    "IT - Information Technology",
+    "IS - Information Systems",
+    "DS - Decision Support",
+    "AI - Artificial Intelligence",
+    "General",
+  ];
+
+  const interestOptions = [
+    "AI & ML",
+    "Web Dev",
+    "Cybersecurity",
+    "Mobile Apps",
+    "Big Data",
+    "Cloud Systems",
+    "IoT & Embedded",
+    "Blockchain",
+    "Game Dev",
+    "AR/VR",
+    "Data Science",
+    "NLP",
+    "Computer Vision",
+    "DevOps",
+    "UI/UX Design",
+    "Robotics",
+    "FinTech",
+    "HealthTech",
+    "EdTech",
+    "E-commerce",
+  ];
 
   if (!user) {
     return (
@@ -395,6 +434,41 @@ export default function Profile() {
                   </h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">Department</label>
+                      {isEditing ? (
+                        <select
+                          value={formData.department}
+                          onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                          className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select Department</option>
+                          {departmentOptions.map((dept) => (
+                            <option key={dept} value={dept}>{dept}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="text-slate-900">{user.department || "Not set"}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">Academic Year</label>
+                      {isEditing ? (
+                        <select
+                          value={formData.academicYear}
+                          onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+                          className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select Year</option>
+                          <option>Senior (Capstone Ready)</option>
+                          <option>Semi-senior</option>
+                          <option>Junior</option>
+                          <option>Sophomore</option>
+                        </select>
+                      ) : (
+                        <p className="text-slate-900">{user.academicYear || "Not set"}</p>
+                      )}
+                    </div>
+                    <div>
                       <label className="block text-sm font-medium text-slate-700 mb-2">Current GPA</label>
                       {isEditing ? (
                         <input
@@ -406,22 +480,6 @@ export default function Profile() {
                         />
                       ) : (
                         <p className="text-slate-900">{user.gpa || "Not set"}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Academic Year</label>
-                      {isEditing ? (
-                        <select
-                          value={formData.academicYear}
-                          onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
-                          className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option>Senior (Capstone Ready)</option>
-                          <option>Junior</option>
-                          <option>Sophomore</option>
-                        </select>
-                      ) : (
-                        <p className="text-slate-900">{user.academicYear || "Not set"}</p>
                       )}
                     </div>
                   </div>
@@ -484,6 +542,61 @@ export default function Profile() {
                       {user.careerGoals || "No career goals set yet."}
                     </p>
                   )}
+                </div>
+
+                {/* Social Links */}
+                <div className="bg-white rounded-xl border border-slate-200 p-6">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Social Links</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">LinkedIn Profile</label>
+                      {isEditing ? (
+                        <input
+                          type="url"
+                          value={formData.linkedinUrl}
+                          onChange={(e) => setFormData({ ...formData, linkedinUrl: e.target.value })}
+                          placeholder="https://linkedin.com/in/your-profile"
+                          className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      ) : user.linkedinUrl ? (
+                        <a
+                          href={user.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                        >
+                          <span className="font-semibold">in</span>
+                          {user.linkedinUrl}
+                        </a>
+                      ) : (
+                        <p className="text-slate-500 text-sm">Not set</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">GitHub Profile</label>
+                      {isEditing ? (
+                        <input
+                          type="url"
+                          value={formData.githubUrl}
+                          onChange={(e) => setFormData({ ...formData, githubUrl: e.target.value })}
+                          placeholder="https://github.com/your-username"
+                          className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      ) : user.githubUrl ? (
+                        <a
+                          href={user.githubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                        >
+                          <span className="font-bold">&lt;/&gt;</span>
+                          {user.githubUrl}
+                        </a>
+                      ) : (
+                        <p className="text-slate-500 text-sm">Not set</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
           </div>

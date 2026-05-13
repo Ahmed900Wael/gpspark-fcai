@@ -10,9 +10,10 @@ import { useAuth } from "@/contexts/auth-context";
 import { useNotification } from "@/contexts/notification-context";
 import { 
   Share2, CheckCircle2, Circle, Clock, MessageSquare, 
-  FileText, ChevronRight, Download, HelpCircle, Loader2, Plus, Upload, Paperclip
+  FileText, ChevronRight, Download, HelpCircle, Loader2, Plus, Upload, Paperclip, X, Calendar, Edit3, Trash2, FolderOpen
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { uploadMilestoneFile, validateFile } from "@/lib/upload";
 
 interface Project {
@@ -21,6 +22,7 @@ interface Project {
   description: string | null;
   domain: string | null;
   status: string;
+  team_id: string | null;
 }
 
 interface Phase {
@@ -34,6 +36,17 @@ interface Phase {
   status: string;
 }
 
+interface Submission {
+  id: string;
+  task_id: string;
+  user_id: string;
+  submission_text: string;
+  file_url: string | null;
+  status: string;
+  submitted_at: string;
+  updated_at: string;
+}
+
 interface Task {
   id: string;
   phase_id: string;
@@ -45,136 +58,10 @@ interface Task {
   file_url?: string | null;
 }
 
-const DUMMY_PROJECT: Project = {
-  id: "demo-project",
-  title: "Autonomous Swarm Logistics",
-  description: "Optimization of decentralized routing protocols for urban drone fleets.",
-  domain: "AI & Robotics",
-  status: "active",
-};
-
-const DUMMY_PHASES: Phase[] = [
-  {
-    id: "demo-phase-1",
-    project_id: "demo-project",
-    phase_number: 1,
-    name: "Proposal",
-    description: "Define project scope, objectives, and methodology.",
-    start_date: "2025-09-01",
-    end_date: "2025-09-30",
-    status: "completed",
-  },
-  {
-    id: "demo-phase-2",
-    project_id: "demo-project",
-    phase_number: 2,
-    name: "Lit. Review",
-    description: "Survey existing research on swarm intelligence and drone routing.",
-    start_date: "2025-10-01",
-    end_date: "2025-10-31",
-    status: "completed",
-  },
-  {
-    id: "demo-phase-3",
-    project_id: "demo-project",
-    phase_number: 3,
-    name: "Development",
-    description: "Build prototype swarm coordination system and simulation environment.",
-    start_date: "2025-11-01",
-    end_date: "2026-01-31",
-    status: "current",
-  },
-  {
-    id: "demo-phase-4",
-    project_id: "demo-project",
-    phase_number: 4,
-    name: "Market Analysis",
-    description: "Feasibility study and competitive landscape for autonomous drone delivery.",
-    start_date: "2026-02-01",
-    end_date: "2026-02-28",
-    status: "pending",
-  },
-  {
-    id: "demo-phase-5",
-    project_id: "demo-project",
-    phase_number: 5,
-    name: "Final Prep",
-    description: "Documentation, testing, and presentation preparation.",
-    start_date: "2026-03-01",
-    end_date: "2026-04-30",
-    status: "pending",
-  },
-];
-
-const DUMMY_TASKS: Task[] = [
-  {
-    id: "demo-task-1",
-    phase_id: "demo-phase-1",
-    title: "Finalize swarm coordination algorithm",
-    description: null,
-    status: "completed",
-    due_date: "2025-09-15",
-    assets_count: 3,
-  },
-  {
-    id: "demo-task-2",
-    phase_id: "demo-phase-1",
-    title: "Submit project proposal document",
-    description: null,
-    status: "completed",
-    due_date: "2025-09-30",
-    assets_count: 1,
-  },
-  {
-    id: "demo-task-3",
-    phase_id: "demo-phase-2",
-    title: "Complete literature review on ACO algorithms",
-    description: null,
-    status: "completed",
-    due_date: "2025-10-15",
-    assets_count: 2,
-  },
-  {
-    id: "demo-task-4",
-    phase_id: "demo-phase-2",
-    title: "Survey drone routing protocols",
-    description: null,
-    status: "completed",
-    due_date: "2025-10-31",
-    assets_count: 1,
-  },
-  {
-    id: "demo-task-5",
-    phase_id: "demo-phase-3",
-    title: "UI/UX dashboard for drone monitoring",
-    description: null,
-    status: "in_progress",
-    due_date: "2025-12-15",
-    assets_count: 2,
-  },
-  {
-    id: "demo-task-6",
-    phase_id: "demo-phase-3",
-    title: "Hardware sensor integration & testing",
-    description: null,
-    status: "pending",
-    due_date: "2026-01-15",
-    assets_count: 0,
-  },
-  {
-    id: "demo-task-7",
-    phase_id: "demo-phase-3",
-    title: "Implement collision avoidance system",
-    description: null,
-    status: "pending",
-    due_date: "2026-01-31",
-    assets_count: 0,
-  },
-];
-
-export default function Milestones() {
+function MilestonesContent() {
   const { supabase, user } = useAuth();
-  const { addNotification } = useNotification();
+  const { addNotification, createNotification, refreshNotifications } = useNotification();
+  const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [phases, setPhases] = useState<Phase[]>([]);
@@ -185,11 +72,35 @@ export default function Milestones() {
   const [newTaskPhase, setNewTaskPhase] = useState<string>("");
   const [addingTask, setAddingTask] = useState(false);
   const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSubmitMilestone, setShowSubmitMilestone] = useState(false);
+  const [submitText, setSubmitText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [showTaskDetail, setShowTaskDetail] = useState(false);
+  const [editingTaskDate, setEditingTaskDate] = useState<string | null>(null);
+  const [savingTask, setSavingTask] = useState(false);
+  const [activePhaseId, setActivePhaseId] = useState<string | null>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
   useEffect(() => {
     loadProjects();
   }, []);
+
+  useEffect(() => {
+    if (projects.length === 0) return;
+    const projectId = searchParams.get("projectId");
+    if (projectId) {
+      const project = projects.find(p => p.id === projectId);
+      if (project) {
+        setSelectedProject(project);
+        return;
+      }
+    }
+    if (!selectedProject || !projects.find(p => p.id === selectedProject.id)) {
+      setSelectedProject(projects[0]);
+    }
+  }, [searchParams, projects]);
 
   useEffect(() => {
     if (selectedProject) {
@@ -197,12 +108,15 @@ export default function Milestones() {
     }
   }, [selectedProject]);
 
+  useEffect(() => {
+    if (phases.length > 0) {
+      const current = phases.find(p => p.status === "current");
+      setActivePhaseId(current?.id || phases[0]?.id || null);
+    }
+  }, [phases]);
+
   const loadProjects = async () => {
     if (!supabase || !user) {
-      setProjects([DUMMY_PROJECT]);
-      setSelectedProject(DUMMY_PROJECT);
-      setPhases(DUMMY_PHASES);
-      setTasks(DUMMY_TASKS);
       setIsLoading(false);
       return;
     }
@@ -219,28 +133,23 @@ export default function Milestones() {
         setProjects(data);
         setSelectedProject(data[0]);
       } else {
-        setProjects([DUMMY_PROJECT]);
-        setSelectedProject(DUMMY_PROJECT);
-        setPhases(DUMMY_PHASES);
-        setTasks(DUMMY_TASKS);
+        setProjects([]);
+        setSelectedProject(null);
+        setPhases([]);
+        setTasks([]);
       }
     } catch (error) {
       console.error("[MILESTONES] Error loading projects:", error);
-      setProjects([DUMMY_PROJECT]);
-      setSelectedProject(DUMMY_PROJECT);
-      setPhases(DUMMY_PHASES);
-      setTasks(DUMMY_TASKS);
+      setProjects([]);
+      setSelectedProject(null);
+      setPhases([]);
+      setTasks([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadProjectData = async (projectId: string) => {
-    if (projectId === "demo-project") {
-      setPhases(DUMMY_PHASES);
-      setTasks(DUMMY_TASKS);
-      return;
-    }
+  const loadProjectData = async (projectId: string, activePhaseId?: string | null) => {
     if (!supabase) return;
     try {
       const { data: phasesData, error: phasesError } = await supabase
@@ -262,6 +171,23 @@ export default function Milestones() {
 
         if (tasksError) throw tasksError;
         setTasks(tasksData || []);
+
+        const taskIds = tasksData?.map(t => t.id) || [];
+        if (taskIds.length > 0 && user) {
+          setLoadingSubmissions(true);
+          const { data: subsData } = await supabase
+            .from("milestone_submissions")
+            .select("*")
+            .in("task_id", taskIds)
+            .eq("user_id", user.id)
+            .order("submitted_at", { ascending: false });
+
+          setSubmissions(subsData || []);
+          setLoadingSubmissions(false);
+        }
+      } else {
+        setTasks([]);
+        setSubmissions([]);
       }
     } catch (error) {
       console.error("[MILESTONES] Error loading project data:", error);
@@ -269,14 +195,7 @@ export default function Milestones() {
   };
 
   const addTask = async () => {
-    if (!newTaskTitle.trim() || !newTaskPhase) return;
-    
-    if (!supabase || selectedProject?.id === "demo-project") {
-      addNotification("success", "Demo Mode", "Task would be added in production.");
-      setNewTaskTitle("");
-      setShowAddTask(false);
-      return;
-    }
+    if (!newTaskTitle.trim() || !newTaskPhase || !supabase) return;
     
     setAddingTask(true);
     try {
@@ -302,11 +221,6 @@ export default function Milestones() {
   };
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
-    if (taskId.startsWith("demo-")) {
-      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
-      addNotification("success", "Updated", `Task marked as ${newStatus.replace("_", " ")} (demo).`);
-      return;
-    }
     if (!supabase) return;
     try {
       const { error } = await supabase
@@ -322,9 +236,8 @@ export default function Milestones() {
     }
   };
 
-  const handleFileUpload = async (taskId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  const handleFileUpload = async (taskId: string, file: File) => {
+    if (!user) return;
 
     const validation = validateFile(file, {
       maxSizeMB: 50,
@@ -345,46 +258,212 @@ export default function Milestones() {
 
     setUploadingTaskId(taskId);
 
-    if (taskId.startsWith("demo-")) {
-      addNotification("success", "Demo Mode", `File "${file.name}" would be uploaded in production.`);
-      setUploadingTaskId(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
-
     const { path, error } = await uploadMilestoneFile(user.id, taskId, file);
 
     if (error) {
       addNotification("error", "Upload Failed", error);
-    } else if (path) {
-      const { data } = supabase!.storage
+    } else if (path && supabase) {
+      const { data } = supabase.storage
         .from("milestones")
         .getPublicUrl(path);
 
       const fileUrl = data.publicUrl;
+      const currentTask = tasks.find(t => t.id === taskId);
+      const newCount = (currentTask?.assets_count || 0) + 1;
 
       setTasks(prev =>
         prev.map(t =>
           t.id === taskId
-            ? { ...t, file_url: fileUrl, assets_count: (t.assets_count || 0) + 1 }
+            ? { ...t, file_url: fileUrl, assets_count: newCount }
             : t
         )
       );
 
-      if (!taskId.startsWith("demo-") && supabase) {
-        await supabase
-          .from("milestone_tasks")
-          .update({ assets_count: (tasks.find(t => t.id === taskId)?.assets_count || 0) + 1 })
-          .eq("id", taskId);
-      }
+      await supabase
+        .from("milestone_tasks")
+        .update({ assets_count: newCount })
+        .eq("id", taskId);
 
       addNotification("success", "File Uploaded", `"${file.name}" attached to task.`);
     }
 
     setUploadingTaskId(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const submitMilestone = async () => {
+    if (!submitText.trim() || !supabase || !user) return;
+
+    const phaseTasks = activePhase 
+      ? tasks.filter(t => t.phase_id === activePhase.id)
+      : [];
+
+    if (phaseTasks.length === 0) {
+      addNotification("error", "No Tasks", "Add at least one task to this phase before submitting.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("milestone_submissions")
+        .insert({
+          task_id: phaseTasks[0].id,
+          user_id: user.id,
+          submission_text: submitText.trim(),
+          status: "submitted",
+        });
+
+      if (error) throw error;
+
+      const { data: newSub } = await supabase
+        .from("milestone_submissions")
+        .select("*")
+        .eq("task_id", phaseTasks[0].id)
+        .eq("user_id", user.id)
+        .order("submitted_at", { ascending: false })
+        .limit(1);
+
+      if (newSub) {
+        setSubmissions(prev => [newSub[0], ...prev]);
+      }
+
+      if (selectedProject?.team_id) {
+        const { data: teamMembers } = await supabase
+          .from("team_members")
+          .select("user_id")
+          .eq("team_id", selectedProject.team_id)
+          .neq("user_id", user.id);
+
+        for (const member of teamMembers || []) {
+          await createNotification(
+            member.user_id,
+            "milestone_submitted",
+            "Milestone Submitted",
+            `${user.fullName} submitted "${activePhase?.name}" for ${selectedProject.title}.`,
+            selectedProject.team_id,
+            selectedProject.id
+          );
+        }
+      }
+
+      addNotification("success", "Submitted", "Milestone submission sent for review.");
+      setSubmitText("");
+      setShowSubmitMilestone(false);
+      await refreshNotifications();
+    } catch (error) {
+      console.error("[MILESTONES] Error submitting milestone:", error);
+      addNotification("error", "Failed", "Could not submit milestone.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openTaskDetail = (task: Task) => {
+    setSelectedTask(task);
+    setEditingTaskDate(task.due_date || "");
+    setShowTaskDetail(true);
+  };
+
+  const updateTaskDate = async () => {
+    if (!selectedTask || !supabase) return;
+    setSavingTask(true);
+    try {
+      const { error } = await supabase
+        .from("milestone_tasks")
+        .update({ due_date: editingTaskDate || null })
+        .eq("id", selectedTask.id);
+
+      if (error) throw error;
+      setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, due_date: editingTaskDate || null } : t));
+      setSelectedTask(prev => prev ? { ...prev, due_date: editingTaskDate || null } : null);
+      addNotification("success", "Updated", "Task date saved.");
+    } catch (error) {
+      console.error("[MILESTONES] Error updating task date:", error);
+      addNotification("error", "Failed", "Could not update task date.");
+    } finally {
+      setSavingTask(false);
+    }
+  };
+
+  const deleteTask = async (taskId: string) => {
+    if (!supabase) return;
+    try {
+      const { error } = await supabase
+        .from("milestone_tasks")
+        .delete()
+        .eq("id", taskId);
+
+      if (error) throw error;
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+      addNotification("success", "Deleted", "Task removed.");
+      setShowTaskDetail(false);
+    } catch (error) {
+      console.error("[MILESTONES] Error deleting task:", error);
+      addNotification("error", "Failed", "Could not delete task.");
+    }
+  };
+
+  const advancePhase = async (phaseId: string) => {
+    if (!supabase) return;
+    try {
+      const currentIndex = phases.findIndex(p => p.id === phaseId);
+      if (currentIndex >= phases.length - 1) {
+        addNotification("info", "Info", "This is the last phase.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("project_phases")
+        .update({ status: "completed" })
+        .eq("id", phaseId);
+
+      if (error) throw error;
+
+      const nextPhase = phases[currentIndex + 1];
+      const { error: error2 } = await supabase
+        .from("project_phases")
+        .update({ status: "current" })
+        .eq("id", nextPhase.id);
+
+      if (error2) throw error2;
+
+      if (selectedProject?.team_id && user) {
+        const { data: teamMembers } = await supabase
+          .from("team_members")
+          .select("user_id")
+          .eq("team_id", selectedProject.team_id)
+          .neq("user_id", user.id);
+
+        for (const member of teamMembers || []) {
+          await createNotification(
+            member.user_id,
+            "milestone_submitted",
+            "Phase Advanced",
+            `${user.fullName} advanced ${selectedProject.title} to Phase ${nextPhase.phase_number}: ${nextPhase.name}.`,
+            selectedProject.team_id,
+            selectedProject.id
+          );
+        }
+      }
+
+      addNotification("success", "Phase Advanced", `Moved to Phase ${nextPhase.phase_number}: ${nextPhase.name}`);
+      await refreshNotifications();
+      loadProjectData(selectedProject!.id);
+    } catch (error) {
+      console.error("[MILESTONES] Error advancing phase:", error);
+      addNotification("error", "Failed", "Could not advance phase.");
+    }
+  };
+
+  const navigateToPhase = (phaseId: string) => {
+    setActivePhaseId(phaseId);
+  };
+
+  const activePhase = phases.find(p => p.id === activePhaseId);
+  const activePhaseTasks = activePhase 
+    ? tasks.filter(t => t.phase_id === activePhase.id)
+    : [];
+  
   const currentPhase = phases.find(p => p.status === "current");
   const currentPhaseTasks = currentPhase 
     ? tasks.filter(t => t.phase_id === currentPhase.id)
@@ -400,6 +479,37 @@ export default function Milestones() {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  if (projects.length === 0 && !isLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-slate-50">
+          <Sidebar activePage="/milestones" />
+          <div className="lg:ml-64 flex flex-col min-h-screen">
+            <SimpleHeader />
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 flex items-center justify-center">
+              <div className="bg-white rounded-xl border border-slate-200 p-12 text-center max-w-md">
+                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                  <FolderOpen className="h-8 w-8 text-blue-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">No Projects Yet</h2>
+                <p className="text-slate-600 mb-6">
+                  Create a project first to start tracking milestones and progress.
+                </p>
+                <Link href="/projects">
+                  <Button className="bg-blue-900 hover:bg-blue-800 text-white">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Go to My Projects
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <Footer />
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute>
     <div className="min-h-screen bg-slate-50">
@@ -414,6 +524,10 @@ export default function Milestones() {
               <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-blue-100 text-blue-700 border-blue-200">
                 {currentPhase ? `Phase ${currentPhase.phase_number}` : "No Active Phase"}
               </span>
+              <Link href="/projects" className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-100 text-green-700 border-green-200 hover:bg-green-200 transition-colors inline-flex items-center gap-1">
+                <FolderOpen className="h-3 w-3" />
+                My Projects
+              </Link>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
               {selectedProject?.title || "My Project"}
@@ -421,7 +535,7 @@ export default function Milestones() {
             <p className="text-slate-600 mt-1">{selectedProject?.description || "Track your graduation project milestones."}</p>
           </div>
 
-          {projects.length > 1 && (
+          {projects.length > 0 && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-slate-700 mb-2">Select Project</label>
               <select
@@ -445,33 +559,25 @@ export default function Milestones() {
             </div>
           ) : (
             <>
-              <div className="mb-8">
-                <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                  <span>PROJECTS</span>
-                  <ChevronRight className="h-4 w-4" />
-                  <span>{selectedProject?.title.toUpperCase() || "MY PROJECT"}</span>
-                </div>
-                <div className="flex items-center justify-end gap-3">
-                  <Button variant="outline" className="border-slate-200">
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Project Brief
-                  </Button>
-                </div>
-              </div>
-
               {phases.length > 0 && (
                 <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6 mb-8 overflow-x-auto">
                   <h3 className="text-lg font-semibold text-slate-900 mb-6">Roadmap Overview</h3>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between min-w-[600px]">
                     {phases.map((phase, index) => (
-                      <div key={phase.id} className="flex flex-col items-center relative">
+                      <button
+                        key={phase.id}
+                        onClick={() => navigateToPhase(phase.id)}
+                        className={`flex flex-col items-center relative flex-1 transition-all ${
+                          activePhaseId === phase.id ? "scale-105" : "opacity-70 hover:opacity-100"
+                        }`}
+                      >
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
                           phase.status === "completed"
                             ? "bg-green-600 text-white"
                             : phase.status === "current"
                             ? "bg-blue-900 text-white"
                             : "bg-slate-100 text-slate-400"
-                        }`}>
+                        } ${activePhaseId === phase.id ? "ring-4 ring-blue-200" : ""}`}>
                           {phase.status === "completed" ? (
                             <CheckCircle2 className="h-6 w-6" />
                           ) : phase.status === "current" ? (
@@ -493,15 +599,27 @@ export default function Milestones() {
                           </div>
                         </div>
                         {index < phases.length - 1 && (
-                          <div className={`absolute top-6 left-12 w-full h-0.5 ${
+                          <div className={`absolute top-6 left-[calc(50%+1.5rem)] w-[calc(100%-3rem)] h-0.5 ${
                             phase.status === "completed" ? "bg-green-600" :
                             phase.status === "current" ? "bg-blue-900" :
                             "bg-slate-200"
-                          }`} style={{ width: "calc(100% + 2rem)" }}></div>
+                          }`}></div>
                         )}
-                      </div>
+                      </button>
                     ))}
                   </div>
+                  {activePhase && activePhase.status === "current" && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+                      <Button
+                        size="sm"
+                        className="bg-green-700 hover:bg-green-600 text-white"
+                        onClick={() => advancePhase(activePhase.id)}
+                      >
+                        Advance to Next Phase
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -516,11 +634,11 @@ export default function Milestones() {
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-slate-900">
-                          {currentPhase ? `Phase ${currentPhase.phase_number}: ${currentPhase.name}` : "No Active Phase"}
+                          {activePhase ? `Phase ${activePhase.phase_number}: ${activePhase.name}` : "No Active Phase"}
                         </h3>
-                        {currentPhase && (
+                        {activePhase && (
                           <p className="text-sm text-slate-500">
-                            {currentPhase.start_date && formatDate(currentPhase.start_date)} - {currentPhase.end_date && formatDate(currentPhase.end_date)}
+                            {activePhase.start_date && formatDate(activePhase.start_date)} - {activePhase.end_date && formatDate(activePhase.end_date)}
                           </p>
                         )}
                       </div>
@@ -569,20 +687,22 @@ export default function Milestones() {
                   )}
 
                   <div className="space-y-3 mb-6">
-                    {currentPhaseTasks.length > 0 ? currentPhaseTasks.map((task) => (
+                    {activePhaseTasks.length > 0 ? activePhaseTasks.map((task) => (
                       <div
                         key={task.id}
-                        className={`flex items-center justify-between p-4 rounded-lg border ${
+                        className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
                           task.status === "completed"
-                            ? "bg-slate-50 border-slate-200"
+                            ? "bg-slate-50 border-slate-200 hover:border-slate-300"
                             : task.status === "in_progress"
-                            ? "bg-white border-blue-200"
-                            : "bg-slate-50 border-slate-200 opacity-60"
+                            ? "bg-white border-blue-200 hover:border-blue-300"
+                            : "bg-slate-50 border-slate-200 opacity-60 hover:opacity-80"
                         }`}
+                        onClick={() => openTaskDetail(task)}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               const nextStatus = task.status === "pending" ? "in_progress" : 
                                                task.status === "in_progress" ? "completed" : "pending";
                               updateTaskStatus(task.id, nextStatus);
@@ -600,7 +720,7 @@ export default function Milestones() {
                             )}
                           </button>
                           <div className="flex-1 min-w-0">
-                            <div className={`text-sm font-medium ${
+                            <div className={`text-sm font-medium truncate ${
                               task.status === "pending" ? "text-slate-500" : "text-slate-900"
                             }`}>
                               {task.title}
@@ -621,6 +741,7 @@ export default function Milestones() {
                                   href={task.file_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
                                   className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
                                 >
                                   <Paperclip className="h-3 w-3" />
@@ -630,31 +751,33 @@ export default function Milestones() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={(e) => handleFileUpload(task.id, e)}
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
-                            className="hidden"
-                          />
-                          <button
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={uploadingTaskId === task.id}
-                            className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
-                            title="Upload file"
-                          >
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                          <label className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer disabled:opacity-50" onClick={(e) => e.stopPropagation()}>
                             {uploadingTaskId === task.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               <Upload className="h-4 w-4" />
                             )}
-                          </button>
+                            <input
+                              type="file"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileUpload(task.id, file);
+                              }}
+                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
+                              className="hidden"
+                              disabled={uploadingTaskId === task.id}
+                            />
+                          </label>
                         </div>
                       </div>
                     )) : (
                       <div className="text-center py-8 text-slate-500">
                         <p>No tasks in current phase</p>
+                        <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowAddTask(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add First Task
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -668,25 +791,69 @@ export default function Milestones() {
                       <Plus className="h-4 w-4 mr-2" />
                       Add Task
                     </Button>
-                    <Button className="bg-blue-900 hover:bg-blue-800 text-white">
+                    <Button 
+                      className="bg-blue-900 hover:bg-blue-800 text-white"
+                      onClick={() => setShowSubmitMilestone(true)}
+                    >
                       Submit Milestone
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-6">
-                  {nextPhase && (
-                    <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6">
-                      <h4 className="text-lg font-semibold text-slate-900 mb-4">Next Phase</h4>
-                      <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                        <div className="text-xs text-blue-600 uppercase tracking-wide mb-1">Phase {nextPhase.phase_number}</div>
-                        <h5 className="font-semibold text-slate-900 mb-2">{nextPhase.name}</h5>
-                        <p className="text-sm text-slate-600 mb-3">
-                          {nextPhase.description || "Upcoming project phase."}
-                        </p>
+                  {/* Submissions Status */}
+                  <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6">
+                    <h4 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-blue-600" />
+                      Submissions
+                    </h4>
+                    {loadingSubmissions ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-5 w-5 text-blue-900 animate-spin" />
                       </div>
-                    </div>
-                  )}
+                    ) : submissions.length === 0 ? (
+                      <p className="text-sm text-slate-500 text-center py-4">No submissions yet.</p>
+                    ) : (
+                      <div className="space-y-3 max-h-80 overflow-y-auto">
+                        {submissions.map((sub) => (
+                          <div key={sub.id} className="p-3 rounded-lg border border-slate-100 bg-slate-50">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                sub.status === "approved" ? "bg-green-100 text-green-700" :
+                                sub.status === "rejected" ? "bg-red-100 text-red-700" :
+                                sub.status === "under_review" ? "bg-amber-100 text-amber-700" :
+                                "bg-blue-100 text-blue-700"
+                              }`}>
+                                {sub.status.replace("_", " ").toUpperCase()}
+                              </span>
+                              <span className="text-xs text-slate-400">
+                                {new Date(sub.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            <p className="text-sm text-slate-700 line-clamp-2">{sub.submission_text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Next Phase */}
+                  {(() => {
+                    const activeIndex = phases.findIndex(p => p.id === activePhaseId);
+                    const nextP = phases[activeIndex + 1];
+                    return nextP ? (
+                      <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6">
+                        <h4 className="text-lg font-semibold text-slate-900 mb-4">Next Phase</h4>
+                        <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                          <div className="text-xs text-blue-600 uppercase tracking-wide mb-1">Phase {nextP.phase_number}</div>
+                          <h5 className="font-semibold text-slate-900 mb-2">{nextP.name}</h5>
+                          <p className="text-sm text-slate-600 mb-3">
+                            {nextP.description || "Upcoming project phase."}
+                          </p>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
 
                   <div className="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-xl p-4 md:p-6 text-white">
                     <div className="flex items-center gap-2 mb-4">
@@ -741,7 +908,187 @@ export default function Milestones() {
 
         <Footer />
       </div>
+
+      {/* Submit Milestone Modal */}
+      {showSubmitMilestone && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowSubmitMilestone(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">Submit Milestone</h3>
+              <button
+                onClick={() => setShowSubmitMilestone(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-sm text-slate-600 mb-4">
+              {activePhase ? `Submitting for Phase ${activePhase.phase_number}: ${activePhase.name}` : "No active phase"}
+            </p>
+            <textarea
+              value={submitText}
+              onChange={(e) => setSubmitText(e.target.value)}
+              placeholder="Describe your milestone submission, progress made, and any challenges..."
+              rows={6}
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-900 resize-none mb-4"
+            />
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowSubmitMilestone(false)}>Cancel</Button>
+              <Button
+                className="bg-blue-900 hover:bg-blue-800 text-white"
+                onClick={submitMilestone}
+                disabled={submitting || !submitText.trim()}
+              >
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                Submit
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Task Detail Modal */}
+      {showTaskDetail && selectedTask && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowTaskDetail(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-slate-900">Task Details</h3>
+              <button
+                onClick={() => setShowTaskDetail(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Title</label>
+                <p className="text-base font-semibold text-slate-900">{selectedTask.title}</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Status</label>
+                <div className="flex items-center gap-2">
+                  {selectedTask.status === "completed" ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  ) : selectedTask.status === "in_progress" ? (
+                    <div className="w-5 h-5 rounded-full border-2 border-blue-900 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-blue-900"></div>
+                    </div>
+                  ) : (
+                    <Circle className="h-5 w-5 text-slate-400" />
+                  )}
+                  <span className={`text-sm font-medium capitalize ${
+                    selectedTask.status === "completed" ? "text-green-600" :
+                    selectedTask.status === "in_progress" ? "text-blue-900" :
+                    "text-slate-500"
+                  }`}>
+                    {selectedTask.status.replace("_", " ")}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const nextStatus = selectedTask.status === "pending" ? "in_progress" : 
+                                       selectedTask.status === "in_progress" ? "completed" : "pending";
+                      updateTaskStatus(selectedTask.id, nextStatus);
+                      setSelectedTask(prev => prev ? { ...prev, status: nextStatus } : null);
+                    }}
+                    className="ml-2 text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Change
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Phase</label>
+                <p className="text-sm text-slate-700">
+                  {(() => {
+                    const phase = phases.find(p => p.id === selectedTask.phase_id);
+                    return phase ? `Phase ${phase.phase_number}: ${phase.name}` : "Unknown";
+                  })()}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Due Date</label>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                    <input
+                      type="date"
+                      value={editingTaskDate || ""}
+                      onChange={(e) => setEditingTaskDate(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-900"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-blue-900 hover:bg-blue-800 text-white flex-shrink-0"
+                    onClick={updateTaskDate}
+                    disabled={savingTask}
+                  >
+                    {savingTask ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit3 className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Attachments</label>
+                <div className="flex items-center gap-2">
+                  {selectedTask.assets_count > 0 ? (
+                    <>
+                      <span className="text-sm text-slate-700">{selectedTask.assets_count} file(s)</span>
+                      {selectedTask.file_url && (
+                        <a
+                          href={selectedTask.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        >
+                          <Paperclip className="h-4 w-4" />
+                          View latest
+                        </a>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-sm text-slate-500">No files attached</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                  onClick={() => deleteTask(selectedTask.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Task
+                </Button>
+                <Button onClick={() => setShowTaskDetail(false)}>Close</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
     </ProtectedRoute>
+  );
+}
+
+export default function Milestones() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-blue-900 animate-spin" />
+      </div>
+    }>
+      <MilestonesContent />
+    </Suspense>
   );
 }

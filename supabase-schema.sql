@@ -11,9 +11,12 @@ CREATE TABLE IF NOT EXISTS profiles (
   university_email TEXT NOT NULL DEFAULT '',
   gpa TEXT DEFAULT '',
   academic_year TEXT DEFAULT '',
+  department TEXT DEFAULT '',
   interests TEXT[] DEFAULT '{}',
   career_goals TEXT DEFAULT '',
   avatar_url TEXT,
+  linkedin_url TEXT,
+  github_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -22,21 +25,25 @@ CREATE TABLE IF NOT EXISTS profiles (
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can view their own profile
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile"
   ON profiles FOR SELECT
   USING (auth.uid() = id);
 
 -- Policy: Users can view other profiles (limited data handled in app)
+DROP POLICY IF EXISTS "Users can view all profiles" ON profiles;
 CREATE POLICY "Users can view all profiles"
   ON profiles FOR SELECT
   USING (true);
 
 -- Policy: Users can insert their own profile
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile"
   ON profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
 
 -- Policy: Users can update their own profile
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
@@ -56,6 +63,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Trigger to create profile on signup
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
@@ -70,6 +78,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger to update updated_at on profile changes
+DROP TRIGGER IF EXISTS set_updated_at ON profiles;
 CREATE TRIGGER set_updated_at
   BEFORE UPDATE ON profiles
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();

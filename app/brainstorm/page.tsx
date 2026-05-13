@@ -655,7 +655,7 @@ export default function BrainstormAI() {
           <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
             {/* Session Sidebar (Desktop) */}
             <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200 bg-white">
-              <div className="p-4 border-b border-slate-200">
+              {/* <div className="p-4 border-b border-slate-200">
                 <Button
                   onClick={createNewSession}
                   className="w-full bg-blue-900 hover:bg-blue-800 text-white"
@@ -663,7 +663,7 @@ export default function BrainstormAI() {
                   <Plus className="h-4 w-4 mr-2" />
                   New Session
                 </Button>
-              </div>
+              </div> */}
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {sessions.length === 0 ? (
                   <div className="text-center py-8">
@@ -874,9 +874,6 @@ export default function BrainstormAI() {
                     placeholder="Type your ideas here..."
                     className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 outline-none"
                   />
-                  <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
-                    <Paperclip className="h-5 w-5" />
-                  </button>
                   <Button 
                     onClick={() => handleSendMessage()}
                     disabled={isLoading || !messageInput.trim()}

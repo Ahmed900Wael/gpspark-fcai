@@ -27,23 +27,28 @@ ALTER TABLE brainstorm_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- Policies for brainstorm_sessions
+DROP POLICY IF EXISTS "Users can view own sessions" ON brainstorm_sessions;
 CREATE POLICY "Users can view own sessions"
   ON brainstorm_sessions FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own sessions" ON brainstorm_sessions;
 CREATE POLICY "Users can insert own sessions"
   ON brainstorm_sessions FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own sessions" ON brainstorm_sessions;
 CREATE POLICY "Users can update own sessions"
   ON brainstorm_sessions FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own sessions" ON brainstorm_sessions;
 CREATE POLICY "Users can delete own sessions"
   ON brainstorm_sessions FOR DELETE
   USING (auth.uid() = user_id);
 
 -- Policies for chat_messages
+DROP POLICY IF EXISTS "Users can view messages from own sessions" ON chat_messages;
 CREATE POLICY "Users can view messages from own sessions"
   ON chat_messages FOR SELECT
   USING (
@@ -54,6 +59,7 @@ CREATE POLICY "Users can view messages from own sessions"
     )
   );
 
+DROP POLICY IF EXISTS "Users can insert messages to own sessions" ON chat_messages;
 CREATE POLICY "Users can insert messages to own sessions"
   ON chat_messages FOR INSERT
   WITH CHECK (
@@ -65,11 +71,11 @@ CREATE POLICY "Users can insert messages to own sessions"
   );
 
 -- Trigger for updated_at on brainstorm_sessions
-CREATE TRIGGER set_brainstorm_updated_at
+CREATE OR REPLACE TRIGGER set_brainstorm_updated_at
   BEFORE UPDATE ON brainstorm_sessions
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- Indexes for performance
-CREATE INDEX idx_brainstorm_sessions_user_id ON brainstorm_sessions(user_id);
-CREATE INDEX idx_chat_messages_session_id ON chat_messages(session_id);
-CREATE INDEX idx_chat_messages_timestamp ON chat_messages(timestamp);
+CREATE INDEX IF NOT EXISTS idx_brainstorm_sessions_user_id ON brainstorm_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(session_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_timestamp ON chat_messages(timestamp);

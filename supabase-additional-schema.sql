@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS project_favorites (
 -- RLS for library_projects (public read)
 ALTER TABLE library_projects ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can view library projects" ON library_projects;
 CREATE POLICY "Anyone can view library projects"
   ON library_projects FOR SELECT
   USING (true);
@@ -37,22 +38,25 @@ CREATE POLICY "Anyone can view library projects"
 -- RLS for project_favorites
 ALTER TABLE project_favorites ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their own favorites" ON project_favorites;
 CREATE POLICY "Users can view their own favorites"
   ON project_favorites FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can add favorites" ON project_favorites;
 CREATE POLICY "Users can add favorites"
   ON project_favorites FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can remove their favorites" ON project_favorites;
 CREATE POLICY "Users can remove their favorites"
   ON project_favorites FOR DELETE
   USING (auth.uid() = user_id);
 
 -- Indexes
-CREATE INDEX idx_library_projects_domain ON library_projects(domain);
-CREATE INDEX idx_library_projects_uniqueness ON library_projects(uniqueness_score DESC);
-CREATE INDEX idx_project_favorites_user ON project_favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_library_projects_domain ON library_projects(domain);
+CREATE INDEX IF NOT EXISTS idx_library_projects_uniqueness ON library_projects(uniqueness_score DESC);
+CREATE INDEX IF NOT EXISTS idx_project_favorites_user ON project_favorites(user_id);
 
 -- ==========================================
 -- 2. TEAM FORMATION TABLE
@@ -91,18 +95,22 @@ CREATE TABLE IF NOT EXISTS team_requests (
 -- RLS for teams
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can view teams" ON teams;
 CREATE POLICY "Anyone can view teams"
   ON teams FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can create teams" ON teams;
 CREATE POLICY "Users can create teams"
   ON teams FOR INSERT
   WITH CHECK (auth.uid() = created_by);
 
+DROP POLICY IF EXISTS "Team creators can update their teams" ON teams;
 CREATE POLICY "Team creators can update their teams"
   ON teams FOR UPDATE
   USING (auth.uid() = created_by);
 
+DROP POLICY IF EXISTS "Team creators can delete their teams" ON teams;
 CREATE POLICY "Team creators can delete their teams"
   ON teams FOR DELETE
   USING (auth.uid() = created_by);
@@ -110,14 +118,17 @@ CREATE POLICY "Team creators can delete their teams"
 -- RLS for team_members
 ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can view team members" ON team_members;
 CREATE POLICY "Anyone can view team members"
   ON team_members FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can join teams" ON team_members;
 CREATE POLICY "Users can join teams"
   ON team_members FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can leave teams" ON team_members;
 CREATE POLICY "Users can leave teams"
   ON team_members FOR DELETE
   USING (auth.uid() = user_id);
@@ -125,24 +136,27 @@ CREATE POLICY "Users can leave teams"
 -- RLS for team_requests
 ALTER TABLE team_requests ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Team creators can view requests" ON team_requests;
 CREATE POLICY "Team creators can view requests"
   ON team_requests FOR SELECT
   USING (auth.uid() IN (SELECT created_by FROM teams WHERE id = team_requests.team_id));
 
+DROP POLICY IF EXISTS "Users can send requests" ON team_requests;
 CREATE POLICY "Users can send requests"
   ON team_requests FOR INSERT
   WITH CHECK (auth.uid() = from_user_id);
 
+DROP POLICY IF EXISTS "Team creators can update requests" ON team_requests;
 CREATE POLICY "Team creators can update requests"
   ON team_requests FOR UPDATE
   USING (auth.uid() IN (SELECT created_by FROM teams WHERE id = team_requests.team_id));
 
 -- Indexes
-CREATE INDEX idx_teams_status ON teams(status);
-CREATE INDEX idx_teams_domain ON teams(project_domain);
-CREATE INDEX idx_team_members_team ON team_members(team_id);
-CREATE INDEX idx_team_members_user ON team_members(user_id);
-CREATE INDEX idx_team_requests_team ON team_requests(team_id);
+CREATE INDEX IF NOT EXISTS idx_teams_status ON teams(status);
+CREATE INDEX IF NOT EXISTS idx_teams_domain ON teams(project_domain);
+CREATE INDEX IF NOT EXISTS idx_team_members_team ON team_members(team_id);
+CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_team_requests_team ON team_requests(team_id);
 
 -- ==========================================
 -- 3. MILESTONES TABLE
@@ -205,14 +219,17 @@ CREATE TABLE IF NOT EXISTS mentor_feedback (
 -- RLS for projects
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view all projects" ON projects;
 CREATE POLICY "Users can view all projects"
   ON projects FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can create projects" ON projects;
 CREATE POLICY "Users can create projects"
   ON projects FOR INSERT
   WITH CHECK (auth.uid() = created_by);
 
+DROP POLICY IF EXISTS "Users can update their projects" ON projects;
 CREATE POLICY "Users can update their projects"
   ON projects FOR UPDATE
   USING (auth.uid() = created_by);
@@ -220,10 +237,12 @@ CREATE POLICY "Users can update their projects"
 -- RLS for project_phases
 ALTER TABLE project_phases ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can view phases" ON project_phases;
 CREATE POLICY "Anyone can view phases"
   ON project_phases FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Project creators can manage phases" ON project_phases;
 CREATE POLICY "Project creators can manage phases"
   ON project_phases FOR ALL
   USING (auth.uid() IN (SELECT created_by FROM projects WHERE id = project_phases.project_id));
@@ -231,10 +250,12 @@ CREATE POLICY "Project creators can manage phases"
 -- RLS for milestone_tasks
 ALTER TABLE milestone_tasks ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can view tasks" ON milestone_tasks;
 CREATE POLICY "Anyone can view tasks"
   ON milestone_tasks FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Project creators can manage tasks" ON milestone_tasks;
 CREATE POLICY "Project creators can manage tasks"
   ON milestone_tasks FOR ALL
   USING (
@@ -248,14 +269,17 @@ CREATE POLICY "Project creators can manage tasks"
 -- RLS for milestone_submissions
 ALTER TABLE milestone_submissions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their own submissions" ON milestone_submissions;
 CREATE POLICY "Users can view their own submissions"
   ON milestone_submissions FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can create submissions" ON milestone_submissions;
 CREATE POLICY "Users can create submissions"
   ON milestone_submissions FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their submissions" ON milestone_submissions;
 CREATE POLICY "Users can update their submissions"
   ON milestone_submissions FOR UPDATE
   USING (auth.uid() = user_id);
@@ -263,6 +287,7 @@ CREATE POLICY "Users can update their submissions"
 -- RLS for mentor_feedback
 ALTER TABLE mentor_feedback ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view feedback on their submissions" ON mentor_feedback;
 CREATE POLICY "Users can view feedback on their submissions"
   ON mentor_feedback FOR SELECT
   USING (
@@ -270,17 +295,18 @@ CREATE POLICY "Users can view feedback on their submissions"
     OR auth.uid() = mentor_id
   );
 
+DROP POLICY IF EXISTS "Mentors can create feedback" ON mentor_feedback;
 CREATE POLICY "Mentors can create feedback"
   ON mentor_feedback FOR INSERT
   WITH CHECK (auth.uid() = mentor_id);
 
 -- Indexes
-CREATE INDEX idx_projects_created_by ON projects(created_by);
-CREATE INDEX idx_project_phases_project ON project_phases(project_id);
-CREATE INDEX idx_milestone_tasks_phase ON milestone_tasks(phase_id);
-CREATE INDEX idx_milestone_submissions_task ON milestone_submissions(task_id);
-CREATE INDEX idx_milestone_submissions_user ON milestone_submissions(user_id);
-CREATE INDEX idx_mentor_feedback_submission ON mentor_feedback(submission_id);
+CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by);
+CREATE INDEX IF NOT EXISTS idx_project_phases_project ON project_phases(project_id);
+CREATE INDEX IF NOT EXISTS idx_milestone_tasks_phase ON milestone_tasks(phase_id);
+CREATE INDEX IF NOT EXISTS idx_milestone_submissions_task ON milestone_submissions(task_id);
+CREATE INDEX IF NOT EXISTS idx_milestone_submissions_user ON milestone_submissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_mentor_feedback_submission ON mentor_feedback(submission_id);
 
 -- ==========================================
 -- SEED DATA: Library Projects
