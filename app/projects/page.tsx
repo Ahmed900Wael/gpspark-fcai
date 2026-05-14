@@ -22,7 +22,10 @@ interface Project {
   domain: string | null;
   status: string;
   team_id: string | null;
+  created_by: string;
   created_at: string;
+  is_owner: boolean;
+  team_name: string | null;
 }
 
 interface Phase {
@@ -64,6 +67,9 @@ export default function ProjectsOverview() {
   const [showLinkModal, setShowLinkModal] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState("");
   const [linkingProject, setLinkingProject] = useState(false);
+  const [showManageMembers, setShowManageMembers] = useState<string | null>(null);
+  const [teamMembers, setTeamMembers] = useState<{ id: string; user_id: string; role: string; profile: any }[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
 
   useEffect(() => {
     loadProjects();
@@ -249,25 +255,174 @@ export default function ProjectsOverview() {
     }
   };
 
+  const unlinkProjectFromTeam = async (projectId: string) => {
+    if (!supabase) return;
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .update({ team_id: null })
+        .eq("id", projectId)
+        .eq("created_by", user!.id);
+
+      if (error) throw error;
+      addNotification("success", "Unlinked", "Project removed from team.");
+      loadProjects();
+    } catch (error) {
+      console.error("[PROJECTS] Error unlinking project:", error);
+      addNotification("error", "Failed", "Could not unlink project.");
+    }
+  };
+
+  const loadProjectTeamMembers = async (projectId: string) => {
+    if (!supabase) return;
+    setLoadingMembers(true);
+    try {
+      const { data: project } = await supabase
+        .from("projects")
+        .select("team_id")
+        .eq("id", projectId)
+        .single();
+
+      if (!project?.team_id) {
+        setTeamMembers([]);
+        return;
+      }
+
+      const { data: members } = await supabase
+        .from("team_members")
+        .select("id, user_id, role")
+        .eq("team_id", project.team_id)
+        .neq("user_id", user!.id);
+
+      if (!members || members.length === 0) {
+        setTeamMembers([]);
+        return;
+      }
+
+      const memberIds = members.map(m => m.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, university_email")
+        .in("id", memberIds);
+
+      const enriched = members.map(m => ({
+        ...m,
+        profile: profiles?.find(p => p.id === m.user_id) || null,
+      }));
+
+      setTeamMembers(enriched);
+    } catch (error) {
+      console.error("[PROJECTS] Error loading team members:", error);
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  const removeMemberFromProject = async (projectId: string, memberId: string) => {
+    if (!supabase) return;
+    try {
+      const { data: project } = await supabase
+        .from("projects")
+        .select("team_id, title")
+        .eq("id", projectId)
+        .single();
+
+      const { data: member } = await supabase
+        .from("team_members")
+        .select("user_id")
+        .eq("team_id", project?.team_id)
+        .eq("id", memberId)
+        .single();
+
+      if (!member) {
+        addNotification("error", "Error", "Member not found.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", project?.team_id)
+        .eq("id", memberId);
+
+      if (error) throw error;
+
+      await createNotification(
+        member.user_id,
+        "team_rejected",
+        "Removed from Project",
+        `You have been removed from "${project?.title}".`,
+        project?.team_id,
+        projectId
+      );
+
+      addNotification("success", "Member Removed", "Member no longer has access to this project.");
+      await refreshNotifications();
+      await loadProjectTeamMembers(projectId);
+      loadProjects();
+    } catch (error) {
+      console.error("[PROJECTS] Error removing member:", error);
+      addNotification("error", "Failed", "Could not remove member.");
+    }
+  };
+
   const loadProjects = async () => {
     if (!supabase || !user) {
       setIsLoading(false);
       return;
     }
     try {
-      const { data, error } = await supabase
+      const { data: ownedProjects, error: ownedError } = await supabase
         .from("projects")
         .select("*")
         .eq("created_by", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setProjects(data || []);
+      if (ownedError) throw ownedError;
 
-      if (data && data.length > 0) {
+      const { data: memberships } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", user.id);
+
+      let teamProjects: any[] = [];
+      if (memberships && memberships.length > 0) {
+        const teamIds = memberships.map(m => m.team_id);
+        const { data: tp, error: tpError } = await supabase
+          .from("projects")
+          .select("*")
+          .in("team_id", teamIds)
+          .neq("created_by", user.id)
+          .order("created_at", { ascending: false });
+
+        if (!tpError && tp) {
+          teamProjects = tp;
+        }
+      }
+
+      const { data: teams } = await supabase
+        .from("teams")
+        .select("id, name");
+
+      const allProjects = [
+        ...(ownedProjects || []).map(p => ({
+          ...p,
+          is_owner: true,
+          team_name: teams?.find(t => t.id === p.team_id)?.name || null,
+        })),
+        ...teamProjects.map(p => ({
+          ...p,
+          is_owner: false,
+          team_name: teams?.find(t => t.id === p.team_id)?.name || null,
+        })),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setProjects(allProjects);
+
+      if (allProjects.length > 0) {
         const stats: Record<string, { totalTasks: number; completedTasks: number; phases: Phase[] }> = {};
         
-        for (const project of data) {
+        for (const project of allProjects) {
           const { data: phases } = await supabase
             .from("project_phases")
             .select("id, project_id, phase_number, name, status")
@@ -373,7 +528,9 @@ export default function ProjectsOverview() {
                   return (
                     <div
                       key={project.id}
-                      className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-shadow"
+                      className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow ${
+                        project.is_owner ? "border-slate-200" : "border-green-200"
+                      }`}
                     >
                       <div className="p-6">
                         <div className="flex items-start justify-between mb-4">
@@ -387,6 +544,11 @@ export default function ProjectsOverview() {
                               }`}>
                                 {project.status.toUpperCase()}
                               </span>
+                              {!project.is_owner && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                                  Team Project
+                                </span>
+                              )}
                             </div>
                             <p className="text-slate-600 text-sm mb-2">{project.description || "No description"}</p>
                             <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -398,7 +560,7 @@ export default function ProjectsOverview() {
                               {project.team_id ? (
                                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
                                   <Users className="h-3 w-3" />
-                                  {userTeams.find(t => t.id === project.team_id)?.name || "Team"}
+                                  {project.team_name || "Team"}
                                 </span>
                               ) : (
                                 <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-400 text-xs font-medium">
@@ -408,29 +570,45 @@ export default function ProjectsOverview() {
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
-                            {project.team_id ? (
-                              <button
-                                onClick={() => {
-                                  if (confirm(`Unlink "${project.title}" from team?`)) {
-                                    unlinkProject(project.id);
-                                  }
-                                }}
-                                className="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                                title="Unlink from team"
-                              >
-                                <LinkIcon className="h-4 w-4" />
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setSelectedTeamId("");
-                                  setShowLinkModal(project.id);
-                                }}
-                                className="p-2 rounded-lg text-slate-400 hover:text-green-600 hover:bg-green-50 transition-colors"
-                                title="Link to team"
-                              >
-                                <Users className="h-4 w-4" />
-                              </button>
+                            {project.is_owner && (
+                              <>
+                                {project.team_id ? (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setShowManageMembers(project.id);
+                                        loadProjectTeamMembers(project.id);
+                                      }}
+                                      className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                      title="Manage members"
+                                    >
+                                      <Users className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        if (confirm(`Unlink "${project.title}" from team? Members will lose access.`)) {
+                                          unlinkProjectFromTeam(project.id);
+                                        }
+                                      }}
+                                      className="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                                      title="Unlink from team"
+                                    >
+                                      <LinkIcon className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedTeamId("");
+                                      setShowLinkModal(project.id);
+                                    }}
+                                    className="p-2 rounded-lg text-slate-400 hover:text-green-600 hover:bg-green-50 transition-colors"
+                                    title="Link to team"
+                                  >
+                                    <Users className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </>
                             )}
                             <Link href={`/milestones?projectId=${project.id}`}>
                               <Button variant="ghost" className="text-blue-900 hover:text-blue-800 hover:bg-blue-50">
@@ -438,16 +616,18 @@ export default function ProjectsOverview() {
                                 <ArrowRight className="ml-2 h-4 w-4" />
                               </Button>
                             </Link>
-                            <button
-                              onClick={() => {
-                                if (confirm(`Delete "${project.title}"? This will remove all phases, tasks, and submissions.`)) {
-                                  deleteProject(project.id);
-                                }
-                              }}
-                              className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            {project.is_owner && (
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Delete "${project.title}"? This will remove all phases, tasks, and submissions.`)) {
+                                    deleteProject(project.id);
+                                  }
+                                }}
+                                className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -643,6 +823,59 @@ export default function ProjectsOverview() {
                   </Button>
                 </div>
               </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showManageMembers && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowManageMembers(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">Manage Project Access</h3>
+              <button onClick={() => setShowManageMembers(null)} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-sm text-slate-600 mb-4">
+              Remove team members' access to this project. They will be notified.
+            </p>
+            {loadingMembers ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-900" />
+              </div>
+            ) : teamMembers.length === 0 ? (
+              <div className="text-center py-8 text-sm text-slate-500">
+                <p>No team members have access to this project.</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {teamMembers.map(member => (
+                  <div key={member.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        {member.profile?.full_name ? member.profile.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">{member.profile?.full_name || "Unknown"}</p>
+                        <p className="text-xs text-slate-500 truncate">{member.profile?.university_email || ""}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Remove ${member.profile?.full_name || "this member"} from this project?`)) {
+                          removeMemberFromProject(showManageMembers, member.id);
+                        }
+                      }}
+                      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0"
+                      title="Remove access"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

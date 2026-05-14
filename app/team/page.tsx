@@ -482,6 +482,52 @@ export default function TeamFormation() {
     }
   };
 
+  const revokeMember = async (teamId: string, memberId: string) => {
+    if (!supabase || !user) return;
+    try {
+      const { data: member } = await supabase
+        .from("team_members")
+        .select("user_id")
+        .eq("team_id", teamId)
+        .eq("id", memberId)
+        .single();
+
+      if (!member) {
+        addNotification("error", "Error", "Member not found.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", teamId)
+        .eq("id", memberId);
+
+      if (error) throw error;
+
+      const { data: team } = await supabase
+        .from("teams")
+        .select("name")
+        .eq("id", teamId)
+        .single();
+
+      await createNotification(
+        member.user_id,
+        "team_rejected",
+        "Removed from Team",
+        `You have been removed from "${team?.name}".`,
+        teamId
+      );
+
+      addNotification("success", "Member Removed", "Member has been removed from the team.");
+      await refreshNotifications();
+      await loadData();
+    } catch (error) {
+      console.error("[TEAM] Error revoking member:", error);
+      addNotification("error", "Failed", "Could not remove member.");
+    }
+  };
+
   const deleteTeam = async (teamId: string) => {
     if (!supabase) return;
     try {
@@ -937,13 +983,26 @@ export default function TeamFormation() {
                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                       {member.profile?.full_name ? member.profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "U"}
                                     </div>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                       <p className="text-sm font-medium text-slate-900 truncate">{member.profile?.full_name || "Unknown"}</p>
                                       <div className="flex items-center gap-2">
                                         <span className="text-xs text-slate-500 capitalize">{member.role}</span>
                                         {member.role === "owner" && <span className="text-xs">👑</span>}
                                       </div>
                                     </div>
+                                    {team.is_owner && member.role !== "owner" && (
+                                      <button
+                                        onClick={() => {
+                                          if (confirm(`Remove ${member.profile?.full_name || "this member"} from the team?`)) {
+                                            revokeMember(team.id, member.id);
+                                          }
+                                        }}
+                                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0"
+                                        title="Remove from team"
+                                      >
+                                        <XIcon className="h-4 w-4" />
+                                      </button>
+                                    )}
                                   </div>
                                 ))}
                               </div>
