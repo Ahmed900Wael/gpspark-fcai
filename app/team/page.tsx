@@ -94,8 +94,9 @@ export default function TeamFormation() {
   const [showConnectModal, setShowConnectModal] = useState(false);
 
   useEffect(() => {
+    if (!user) return;
     loadData();
-  }, []);
+  }, [user]);
 
   const loadData = async () => {
     if (!supabase || !user) {

@@ -44,7 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Restore session from localStorage immediately
+    let mounted = true;
+
     const cachedSession = localStorage.getItem("gpspark_session");
     const cachedUser = localStorage.getItem("gpspark_user");
     
@@ -55,19 +56,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(parsedSession);
         setSupabaseUser(parsedSession.user);
         setUser(parsedUser);
+        setIsLoading(false);
       } catch (e) {
         localStorage.removeItem("gpspark_session");
         localStorage.removeItem("gpspark_user");
       }
     }
 
-    // Verify session with Supabase
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+
       if (session) {
         setSession(session);
         setSupabaseUser(session.user);
+        localStorage.setItem("gpspark_session", JSON.stringify(session));
         fetchUserProfile(session.user.id);
-      } else {
+      } else if (!cachedSession) {
         setSession(null);
         setSupabaseUser(null);
         setUser(null);
@@ -77,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("[SERVER] Auth state changed:", _event);
       setSession(session);
@@ -94,7 +97,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserProfile = async (userId: string) => {

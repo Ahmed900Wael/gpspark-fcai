@@ -72,9 +72,10 @@ export default function ProjectsOverview() {
   const [loadingMembers, setLoadingMembers] = useState(false);
 
   useEffect(() => {
+    if (!user) return;
     loadProjects();
     loadUserTeams();
-  }, []);
+  }, [user]);
 
   const loadUserTeams = async () => {
     if (!supabase || !user) return;

@@ -86,8 +86,9 @@ function MilestonesContent() {
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
   useEffect(() => {
+    if (!user) return;
     loadProjects();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (projects.length === 0) return;
