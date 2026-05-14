@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { QwenService } from "@/lib/qwen-service";
 
 export async function POST(request: Request) {
   try {
@@ -12,56 +11,44 @@ export async function POST(request: Request) {
       });
     }
 
-    const qwen = new QwenService({
-      systemPrompt: `You are an expert academic project evaluator for FCAI-CU graduation projects. Analyze the following conversation between a student and AI tutor to identify:
-
-1. **Market Gaps**: Underserved areas, unmet user needs, or opportunities in the project's domain that the student could capitalize on.
-2. **Technical Challenges**: Specific technical hurdles the project will face, with severity levels (high, medium, low).
-
-Return ONLY a JSON object with this exact structure:
-{
-  "marketGaps": [
-    {
-      "title": "<short gap name>",
-      "description": "<1-2 sentence explanation of the gap and why it matters>"
-    }
-  ],
-  "technicalChallenges": [
-    {
-      "title": "<short challenge name>",
-      "description": "<1-2 sentence explanation of the challenge and potential mitigation>",
-      "severity": "high" | "medium" | "low"
-    }
-  ]
-}
-
-Be specific and actionable. Base your analysis ONLY on the conversation context provided. If the conversation lacks sufficient detail, return fewer items with appropriate caveats.`,
-    });
-
-    const conversationText = messages
-      .map((msg: { role: string; content: string }) => `${msg.role}: ${msg.content}`)
-      .join("\n\n");
-
-    const response = await qwen.chat([
-      { role: "user", content: `Analyze this conversation:\n\n${conversationText}` },
-    ]);
-
-    try {
-      const jsonMatch = response.content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return NextResponse.json({
-          marketGaps: parsed.marketGaps || [],
-          technicalChallenges: parsed.technicalChallenges || [],
-        });
-      }
-    } catch {
-      // Fall through to defaults
-    }
-
+    // Dummy data for prototype
     return NextResponse.json({
-      marketGaps: [],
-      technicalChallenges: [],
+      marketGaps: [
+        {
+          title: "Real-time Fleet Optimization",
+          description: "Few solutions address dynamic route recalculation for urban drone fleets under 500ms latency constraints.",
+        },
+        {
+          title: "Cross-platform Interoperability",
+          description: "Lack of standardized protocols between different drone manufacturers creates integration barriers.",
+        },
+        {
+          title: "Regulatory Compliance Automation",
+          description: "No existing tools automatically adapt flight plans to changing local aviation regulations.",
+        },
+      ],
+      technicalChallenges: [
+        {
+          title: "Swarm Communication Latency",
+          description: "Maintaining sub-100ms inter-drone communication in dense urban environments with signal interference.",
+          severity: "high",
+        },
+        {
+          title: "Battery Life Optimization",
+          description: "Balancing computation-heavy routing algorithms with limited onboard processing power and battery capacity.",
+          severity: "high",
+        },
+        {
+          title: "GPS-denied Navigation",
+          description: "Implementing reliable alternative positioning systems for indoor or signal-blocked areas.",
+          severity: "medium",
+        },
+        {
+          title: "Collision Avoidance at Scale",
+          description: "Scaling decentralized collision avoidance from 5 to 50+ drones without exponential complexity.",
+          severity: "medium",
+        },
+      ],
     });
   } catch (error) {
     console.error("[ANALYSIS_API] Error:", error);
