@@ -74,7 +74,7 @@ export default function Dashboard() {
     setIsLoading(true);
 
     try {
-      const { data: projectsData, error: projectsError } = await supabase
+      const { data: ownedProjects, error: ownedError } = await supabase
         .from("projects")
         .select(`
           *,
@@ -94,11 +94,25 @@ export default function Dashboard() {
         .eq("created_by", user.id)
         .order("created_at", { ascending: false });
 
-      if (projectsError) {
-        console.error("Error fetching projects:", projectsError);
-      } else {
-        setProjects(projectsData || []);
+      if (ownedError) {
+        console.error("Error fetching owned projects:", ownedError);
       }
+
+      const { data: accessProjects, error: accessError } = await supabase
+        .from("project_access")
+        .select("project_id, projects!inner(*)")
+        .eq("user_id", user.id);
+
+      if (accessError) {
+        console.error("Error fetching access projects:", accessError);
+      }
+
+      const accessProjectList = (accessProjects || [])
+        .map(a => a.projects)
+        .filter(Boolean);
+
+      const allProjects = [...(ownedProjects || []), ...accessProjectList];
+      setProjects(allProjects);
 
       const { data: teamsData, error: teamsError } = await supabase
         .from("team_members")
@@ -124,7 +138,7 @@ export default function Dashboard() {
         setTeams(formattedTeams);
       }
 
-      calculateStats(projectsData || []);
+      calculateStats(allProjects);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
     } finally {

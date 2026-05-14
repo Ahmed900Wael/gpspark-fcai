@@ -132,29 +132,20 @@ function MilestonesContent() {
 
       if (ownedError) throw ownedError;
 
-      const { data: memberships } = await supabase
-        .from("team_members")
-        .select("team_id")
+      const { data: accessProjects, error: accessError } = await supabase
+        .from("project_access")
+        .select("project_id, projects(*)")
         .eq("user_id", user.id);
 
-      let teamProjects: any[] = [];
-      if (memberships && memberships.length > 0) {
-        const teamIds = memberships.map(m => m.team_id);
-        const { data: tp, error: tpError } = await supabase
-          .from("projects")
-          .select("*")
-          .in("team_id", teamIds)
-          .neq("created_by", user.id)
-          .order("created_at", { ascending: false });
+      if (accessError) throw accessError;
 
-        if (!tpError && tp) {
-          teamProjects = tp;
-        }
-      }
+      const accessProjectList = (accessProjects || [])
+        .map(a => a.projects)
+        .filter(Boolean);
 
       const allProjects = [
         ...(ownedProjects || []).map(p => ({ ...p, is_owner: true })),
-        ...teamProjects.map(p => ({ ...p, is_owner: false })),
+        ...accessProjectList.map(p => ({ ...p, is_owner: false })),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       if (allProjects.length > 0) {

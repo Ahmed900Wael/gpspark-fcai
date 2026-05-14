@@ -122,6 +122,16 @@ export default function ProjectsOverview() {
         .eq("team_id", selectedTeamId)
         .neq("user_id", user!.id);
 
+      const accessInserts = (teamMembers || []).map(m => ({
+        project_id: projectId,
+        user_id: m.user_id,
+        granted_by: user!.id,
+      }));
+
+      if (accessInserts.length > 0) {
+        await supabase.from("project_access").insert(accessInserts);
+      }
+
       for (const member of teamMembers || []) {
         await createNotification(
           member.user_id,
@@ -256,22 +266,10 @@ export default function ProjectsOverview() {
     if (!supabase) return;
     setLoadingMembers(true);
     try {
-      const { data: project } = await supabase
-        .from("projects")
-        .select("team_id")
-        .eq("id", projectId)
-        .single();
-
-      if (!project?.team_id) {
-        setTeamMembers([]);
-        return;
-      }
-
       const { data: members } = await supabase
-        .from("team_members")
-        .select("id, user_id, role")
-        .eq("team_id", project.team_id)
-        .neq("user_id", user!.id);
+        .from("project_access")
+        .select("id, user_id, granted_by")
+        .eq("project_id", projectId);
 
       if (!members || members.length === 0) {
         setTeamMembers([]);
@@ -287,6 +285,7 @@ export default function ProjectsOverview() {
       const enriched = members.map(m => ({
         ...m,
         profile: profiles?.find(p => p.id === m.user_id) || null,
+        role: "member",
       }));
 
       setTeamMembers(enriched);
@@ -307,9 +306,9 @@ export default function ProjectsOverview() {
         .single();
 
       const { data: member } = await supabase
-        .from("team_members")
+        .from("project_access")
         .select("user_id")
-        .eq("team_id", project?.team_id)
+        .eq("project_id", projectId)
         .eq("id", memberId)
         .single();
 
@@ -319,9 +318,9 @@ export default function ProjectsOverview() {
       }
 
       const { error } = await supabase
-        .from("team_members")
+        .from("project_access")
         .delete()
-        .eq("team_id", project?.team_id)
+        .eq("project_id", projectId)
         .eq("id", memberId);
 
       if (error) throw error;
@@ -329,19 +328,19 @@ export default function ProjectsOverview() {
       await createNotification(
         member.user_id,
         "team_rejected",
-        "Removed from Project",
-        `You have been removed from "${project?.title}".`,
+        "Project Access Removed",
+        `Your access to "${project?.title}" has been revoked.`,
         project?.team_id,
         projectId
       );
 
-      addNotification("success", "Member Removed", "Member no longer has access to this project.");
+      addNotification("success", "Access Removed", "Member no longer has access to this project.");
       await refreshNotifications();
       await loadProjectTeamMembers(projectId);
       loadProjects();
     } catch (error) {
       console.error("[PROJECTS] Error removing member:", error);
-      addNotification("error", "Failed", "Could not remove member.");
+      addNotification("error", "Failed", "Could not remove member access.");
     }
   };
 
@@ -359,29 +358,20 @@ export default function ProjectsOverview() {
 
       if (ownedError) throw ownedError;
 
-      const { data: memberships } = await supabase
-        .from("team_members")
-        .select("team_id")
+      const { data: accessProjects, error: accessError } = await supabase
+        .from("project_access")
+        .select("project_id, projects(*)")
         .eq("user_id", user.id);
 
-      let teamProjects: any[] = [];
-      if (memberships && memberships.length > 0) {
-        const teamIds = memberships.map(m => m.team_id);
-        const { data: tp, error: tpError } = await supabase
-          .from("projects")
-          .select("*")
-          .in("team_id", teamIds)
-          .neq("created_by", user.id)
-          .order("created_at", { ascending: false });
-
-        if (!tpError && tp) {
-          teamProjects = tp;
-        }
-      }
+      if (accessError) throw accessError;
 
       const { data: teams } = await supabase
         .from("teams")
         .select("id, name");
+
+      const accessProjectList: any[] = (accessProjects || [])
+        .map((a: any) => a.projects)
+        .filter(Boolean);
 
       const allProjects = [
         ...(ownedProjects || []).map(p => ({
@@ -389,7 +379,7 @@ export default function ProjectsOverview() {
           is_owner: true,
           team_name: teams?.find(t => t.id === p.team_id)?.name || null,
         })),
-        ...teamProjects.map(p => ({
+        ...accessProjectList.map((p: any) => ({
           ...p,
           is_owner: false,
           team_name: teams?.find(t => t.id === p.team_id)?.name || null,

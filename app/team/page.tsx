@@ -430,6 +430,21 @@ export default function TeamFormation() {
           return;
         }
 
+        const { data: teamProjects } = await supabase
+          .from("projects")
+          .select("id")
+          .eq("team_id", request.team_id)
+          .neq("created_by", request.from_user_id);
+
+        if (teamProjects && teamProjects.length > 0) {
+          const accessInserts = teamProjects.map(p => ({
+            project_id: p.id,
+            user_id: request.from_user_id,
+            granted_by: user!.id,
+          }));
+          await supabase.from("project_access").insert(accessInserts);
+        }
+
         const notifOk = await createNotification(
           request.from_user_id,
           "team_accepted",
@@ -498,6 +513,19 @@ export default function TeamFormation() {
         return;
       }
 
+      const { data: teamProjects } = await supabase
+        .from("projects")
+        .select("id, title")
+        .eq("team_id", teamId);
+
+      const projectIds = teamProjects?.map(p => p.id) || [];
+
+      await supabase
+        .from("project_access")
+        .delete()
+        .eq("user_id", member.user_id)
+        .in("project_id", projectIds);
+
       const { error } = await supabase
         .from("team_members")
         .delete()
@@ -516,11 +544,11 @@ export default function TeamFormation() {
         member.user_id,
         "team_rejected",
         "Removed from Team",
-        `You have been removed from "${team?.name}".`,
+        `You have been removed from "${team?.name}" and lost access to all linked projects.`,
         teamId
       );
 
-      addNotification("success", "Member Removed", "Member has been removed from the team.");
+      addNotification("success", "Member Removed", "Member has been removed from the team and all project access revoked.");
       await refreshNotifications();
       await loadData();
     } catch (error) {
