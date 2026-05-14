@@ -103,13 +103,14 @@ export default function Dashboard() {
         .select("project_id, projects!inner(*)")
         .eq("user_id", user.id);
 
-      if (accessError) {
-        console.error("Error fetching access projects:", accessError);
+      let accessProjectList: any[] = [];
+      if (accessError && accessError.code !== "PGRST205") {
+        console.warn("[DASHBOARD] project_access table not ready:", accessError);
+      } else if (accessProjects) {
+        accessProjectList = accessProjects
+          .map((a: any) => a.projects)
+          .filter(Boolean);
       }
-
-      const accessProjectList = (accessProjects || [])
-        .map(a => a.projects)
-        .filter(Boolean);
 
       const allProjects = [...(ownedProjects || []), ...accessProjectList];
       setProjects(allProjects);

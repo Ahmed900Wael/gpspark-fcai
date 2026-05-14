@@ -442,7 +442,10 @@ export default function TeamFormation() {
             user_id: request.from_user_id,
             granted_by: user!.id,
           }));
-          await supabase.from("project_access").insert(accessInserts);
+          const { error: accessError } = await supabase.from("project_access").insert(accessInserts);
+          if (accessError && accessError.code !== "PGRST205") {
+            console.warn("[TEAM] project_access table not ready:", accessError);
+          }
         }
 
         const notifOk = await createNotification(
@@ -520,11 +523,17 @@ export default function TeamFormation() {
 
       const projectIds = teamProjects?.map(p => p.id) || [];
 
-      await supabase
-        .from("project_access")
-        .delete()
-        .eq("user_id", member.user_id)
-        .in("project_id", projectIds);
+      if (projectIds.length > 0) {
+        const { error: accessDeleteError } = await supabase
+          .from("project_access")
+          .delete()
+          .eq("user_id", member.user_id)
+          .in("project_id", projectIds);
+
+        if (accessDeleteError && accessDeleteError.code !== "PGRST205") {
+          console.warn("[TEAM] project_access table not ready:", accessDeleteError);
+        }
+      }
 
       const { error } = await supabase
         .from("team_members")

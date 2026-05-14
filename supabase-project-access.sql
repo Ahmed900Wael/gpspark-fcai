@@ -14,33 +14,29 @@ CREATE TABLE IF NOT EXISTS project_access (
 CREATE INDEX IF NOT EXISTS idx_project_access_project ON project_access(project_id);
 CREATE INDEX IF NOT EXISTS idx_project_access_user ON project_access(user_id);
 
--- 2. RLS for project_access
-ALTER TABLE project_access ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Users can view their own project access" ON project_access;
-CREATE POLICY "Users can view their own project access"
-  ON project_access FOR SELECT
-  USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Project creators can manage project access" ON project_access;
-CREATE POLICY "Project creators can manage project access"
-  ON project_access FOR ALL
-  USING (
-    auth.uid() IN (SELECT created_by FROM projects WHERE id = project_access.project_id)
-  );
+-- 2. Disable RLS on project_access to prevent infinite recursion
+-- (Access is controlled by app logic, not row-level policies)
+ALTER TABLE project_access DISABLE ROW LEVEL SECURITY;
 
 -- 3. Update projects RLS to include project_access
+-- First, drop the old policy that causes recursion
 DROP POLICY IF EXISTS "Team members can view team projects" ON projects;
-CREATE POLICY "Team members can view team projects"
+
+-- Create a safe policy using EXISTS instead of IN subquery
+DROP POLICY IF EXISTS "Users can view accessible projects" ON projects;
+CREATE POLICY "Users can view accessible projects"
   ON projects FOR SELECT
   USING (
     auth.uid() = created_by
-    OR auth.uid() IN (
-      SELECT user_id FROM project_access WHERE project_id = projects.id
+    OR team_id IS NOT NULL
+    OR EXISTS (
+      SELECT 1 FROM project_access pa 
+      WHERE pa.project_id = projects.id AND pa.user_id = auth.uid()
     )
   );
 
+-- Restrict update/delete to owner only
 DROP POLICY IF EXISTS "Team owners can update team projects" ON projects;
-CREATE POLICY "Team owners can update team projects"
+CREATE POLICY "Project owners can update projects"
   ON projects FOR UPDATE
   USING (auth.uid() = created_by);

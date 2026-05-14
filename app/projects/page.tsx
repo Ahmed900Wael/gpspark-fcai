@@ -129,7 +129,10 @@ export default function ProjectsOverview() {
       }));
 
       if (accessInserts.length > 0) {
-        await supabase.from("project_access").insert(accessInserts);
+        const { error: accessError } = await supabase.from("project_access").insert(accessInserts);
+        if (accessError && accessError.code !== "PGRST205") {
+          console.warn("[PROJECTS] project_access table not ready:", accessError);
+        }
       }
 
       for (const member of teamMembers || []) {
@@ -266,14 +269,17 @@ export default function ProjectsOverview() {
     if (!supabase) return;
     setLoadingMembers(true);
     try {
-      const { data: members } = await supabase
+      const { data: members, error: membersError } = await supabase
         .from("project_access")
         .select("id, user_id, granted_by")
         .eq("project_id", projectId);
 
-      if (!members || members.length === 0) {
-        setTeamMembers([]);
-        return;
+      if (membersError) {
+        if (membersError.code === "PGRST205") {
+          setTeamMembers([]);
+          return;
+        }
+        throw membersError;
       }
 
       const memberIds = members.map(m => m.user_id);
@@ -323,7 +329,13 @@ export default function ProjectsOverview() {
         .eq("project_id", projectId)
         .eq("id", memberId);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "PGRST205") {
+          addNotification("error", "Setup Required", "Run supabase-project-access.sql in Supabase SQL Editor first.");
+          return;
+        }
+        throw error;
+      }
 
       await createNotification(
         member.user_id,
@@ -363,15 +375,18 @@ export default function ProjectsOverview() {
         .select("project_id, projects(*)")
         .eq("user_id", user.id);
 
-      if (accessError) throw accessError;
+      let accessProjectList: any[] = [];
+      if (accessError && accessError.code !== "PGRST205") {
+        console.warn("[PROJECTS] project_access table not ready, falling back to team access:", accessError);
+      } else if (accessProjects) {
+        accessProjectList = accessProjects
+          .map((a: any) => a.projects)
+          .filter(Boolean);
+      }
 
       const { data: teams } = await supabase
         .from("teams")
         .select("id, name");
-
-      const accessProjectList: any[] = (accessProjects || [])
-        .map((a: any) => a.projects)
-        .filter(Boolean);
 
       const allProjects = [
         ...(ownedProjects || []).map(p => ({

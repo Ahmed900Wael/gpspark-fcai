@@ -137,11 +137,14 @@ function MilestonesContent() {
         .select("project_id, projects(*)")
         .eq("user_id", user.id);
 
-      if (accessError) throw accessError;
-
-      const accessProjectList = (accessProjects || [])
-        .map(a => a.projects)
-        .filter(Boolean);
+      let accessProjectList: any[] = [];
+      if (accessError && accessError.code !== "PGRST205") {
+        console.warn("[MILESTONES] project_access table not ready, falling back to team access:", accessError);
+      } else if (accessProjects) {
+        accessProjectList = accessProjects
+          .map((a: any) => a.projects)
+          .filter(Boolean);
+      }
 
       const allProjects = [
         ...(ownedProjects || []).map(p => ({ ...p, is_owner: true })),
