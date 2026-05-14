@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
+import { QwenService } from "@/lib/qwen-service";
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+export async function POST(request: Request) {
+  try {
+    const { messages } = await request.json();
 
-const ANALYSIS_PROMPT = `You are an expert academic project evaluator for FCAI-CU graduation projects. Analyze the following conversation between a student and AI tutor to identify:
+    if (!messages || messages.length === 0) {
+      return NextResponse.json({
+        marketGaps: [],
+        technicalChallenges: [],
+      });
+    }
+
+    const qwen = new QwenService({
+      systemPrompt: `You are an expert academic project evaluator for FCAI-CU graduation projects. Analyze the following conversation between a student and AI tutor to identify:
 
 1. **Market Gaps**: Underserved areas, unmet user needs, or opportunities in the project's domain that the student could capitalize on.
 2. **Technical Challenges**: Specific technical hurdles the project will face, with severity levels (high, medium, low).
@@ -24,72 +35,34 @@ Return ONLY a JSON object with this exact structure:
   ]
 }
 
-Be specific and actionable. Base your analysis ONLY on the conversation context provided. If the conversation lacks sufficient detail, return fewer items with appropriate caveats.`;
-
-export async function POST(request: Request) {
-  try {
-    const { messages } = await request.json();
-
-    if (!OPENROUTER_API_KEY) {
-      return NextResponse.json(
-        { error: "OpenRouter API key not configured" },
-        { status: 500 }
-      );
-    }
-
-    if (!messages || messages.length === 0) {
-      return NextResponse.json({
-        marketGaps: [],
-        technicalChallenges: [],
-      });
-    }
+Be specific and actionable. Base your analysis ONLY on the conversation context provided. If the conversation lacks sufficient detail, return fewer items with appropriate caveats.`,
+    });
 
     const conversationText = messages
       .map((msg: { role: string; content: string }) => `${msg.role}: ${msg.content}`)
       .join("\n\n");
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-        "X-Title": "GPSpark",
-      },
-      body: JSON.stringify({
-        model: "qwen/qwen-2.5-7b-instruct:free",
-        messages: [
-          { role: "system", content: ANALYSIS_PROMPT },
-          { role: "user", content: `Analyze this conversation:\n\n${conversationText}` },
-        ],
-        max_tokens: 600,
-        temperature: 0.4,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return NextResponse.json(
-        { error: `OpenRouter API error (${response.status})` },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "{}";
+    const response = await qwen.chat([
+      { role: "user", content: `Analyze this conversation:\n\n${conversationText}` },
+    ]);
 
     try {
-      const parsed = JSON.parse(content);
-      return NextResponse.json({
-        marketGaps: parsed.marketGaps || [],
-        technicalChallenges: parsed.technicalChallenges || [],
-      });
-    } catch (parseError) {
-      return NextResponse.json({
-        marketGaps: [],
-        technicalChallenges: [],
-      });
+      const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return NextResponse.json({
+          marketGaps: parsed.marketGaps || [],
+          technicalChallenges: parsed.technicalChallenges || [],
+        });
+      }
+    } catch {
+      // Fall through to defaults
     }
+
+    return NextResponse.json({
+      marketGaps: [],
+      technicalChallenges: [],
+    });
   } catch (error) {
     console.error("[ANALYSIS_API] Error:", error);
     return NextResponse.json(
