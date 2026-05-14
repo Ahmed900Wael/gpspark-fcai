@@ -23,6 +23,8 @@ interface Project {
   domain: string | null;
   status: string;
   team_id: string | null;
+  created_by: string;
+  is_owner: boolean;
 }
 
 interface Phase {
@@ -121,17 +123,42 @@ function MilestonesContent() {
       return;
     }
     try {
-      const { data, error } = await supabase
+      const { data: ownedProjects, error: ownedError } = await supabase
         .from("projects")
         .select("*")
         .eq("created_by", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setProjects(data);
-        setSelectedProject(data[0]);
+      if (ownedError) throw ownedError;
+
+      const { data: memberships } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", user.id);
+
+      let teamProjects: any[] = [];
+      if (memberships && memberships.length > 0) {
+        const teamIds = memberships.map(m => m.team_id);
+        const { data: tp, error: tpError } = await supabase
+          .from("projects")
+          .select("*")
+          .in("team_id", teamIds)
+          .neq("created_by", user.id)
+          .order("created_at", { ascending: false });
+
+        if (!tpError && tp) {
+          teamProjects = tp;
+        }
+      }
+
+      const allProjects = [
+        ...(ownedProjects || []).map(p => ({ ...p, is_owner: true })),
+        ...teamProjects.map(p => ({ ...p, is_owner: false })),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      if (allProjects.length > 0) {
+        setProjects(allProjects);
+        setSelectedProject(allProjects[0]);
       } else {
         setProjects([]);
         setSelectedProject(null);
@@ -608,7 +635,7 @@ function MilestonesContent() {
                       </button>
                     ))}
                   </div>
-                  {activePhase && activePhase.status === "current" && (
+                  {activePhase && activePhase.status === "current" && selectedProject?.is_owner && (
                     <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
                       <Button
                         size="sm"
@@ -649,7 +676,7 @@ function MilestonesContent() {
                     </div>
                   </div>
 
-                  {showAddTask && (
+                  {showAddTask && selectedProject?.is_owner && (
                     <div className="bg-slate-50 rounded-lg p-4 mb-4">
                       <h4 className="text-sm font-semibold text-slate-900 mb-3">Add New Task</h4>
                       <div className="space-y-3">
@@ -700,6 +727,7 @@ function MilestonesContent() {
                         onClick={() => openTaskDetail(task)}
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {selectedProject?.is_owner && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -719,6 +747,20 @@ function MilestonesContent() {
                               <Circle className="h-5 w-5 text-slate-400" />
                             )}
                           </button>
+                          )}
+                          {!selectedProject?.is_owner && (
+                            <div className="flex-shrink-0">
+                              {task.status === "completed" ? (
+                                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                              ) : task.status === "in_progress" ? (
+                                <div className="w-5 h-5 rounded-full border-2 border-blue-900 flex items-center justify-center">
+                                  <div className="w-2 h-2 rounded-full bg-blue-900"></div>
+                                </div>
+                              ) : (
+                                <Circle className="h-5 w-5 text-slate-400" />
+                              )}
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className={`text-sm font-medium truncate ${
                               task.status === "pending" ? "text-slate-500" : "text-slate-900"
@@ -752,6 +794,7 @@ function MilestonesContent() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                          {selectedProject?.is_owner && (
                           <label className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer disabled:opacity-50" onClick={(e) => e.stopPropagation()}>
                             {uploadingTaskId === task.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -769,6 +812,7 @@ function MilestonesContent() {
                               disabled={uploadingTaskId === task.id}
                             />
                           </label>
+                          )}
                         </div>
                       </div>
                     )) : (
@@ -783,6 +827,7 @@ function MilestonesContent() {
                   </div>
 
                   <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                    {selectedProject?.is_owner && (
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -791,12 +836,18 @@ function MilestonesContent() {
                       <Plus className="h-4 w-4 mr-2" />
                       Add Task
                     </Button>
+                    )}
+                    {selectedProject?.is_owner && (
                     <Button 
                       className="bg-blue-900 hover:bg-blue-800 text-white"
                       onClick={() => setShowSubmitMilestone(true)}
                     >
                       Submit Milestone
                     </Button>
+                    )}
+                    {!selectedProject?.is_owner && (
+                      <span className="text-sm text-slate-500 italic">View-only access</span>
+                    )}
                   </div>
                 </div>
 
@@ -988,6 +1039,7 @@ function MilestonesContent() {
                   }`}>
                     {selectedTask.status.replace("_", " ")}
                   </span>
+                  {selectedProject?.is_owner && (
                   <button
                     onClick={() => {
                       const nextStatus = selectedTask.status === "pending" ? "in_progress" : 
@@ -999,6 +1051,7 @@ function MilestonesContent() {
                   >
                     Change
                   </button>
+                  )}
                 </div>
               </div>
 
@@ -1014,6 +1067,7 @@ function MilestonesContent() {
 
               <div>
                 <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Due Date</label>
+                {selectedProject?.is_owner ? (
                 <div className="flex items-center gap-3">
                   <div className="flex-1 relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
@@ -1033,6 +1087,9 @@ function MilestonesContent() {
                     {savingTask ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit3 className="h-4 w-4" />}
                   </Button>
                 </div>
+                ) : (
+                  <p className="text-sm text-slate-700">{selectedTask.due_date ? formatDate(selectedTask.due_date) : "No date set"}</p>
+                )}
               </div>
 
               <div>
@@ -1060,6 +1117,7 @@ function MilestonesContent() {
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                {selectedProject?.is_owner && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -1069,6 +1127,8 @@ function MilestonesContent() {
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Task
                 </Button>
+                )}
+                {!selectedProject?.is_owner && <div />}
                 <Button onClick={() => setShowTaskDetail(false)}>Close</Button>
               </div>
             </div>
