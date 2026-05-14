@@ -234,6 +234,11 @@ CREATE POLICY "Users can update their projects"
   ON projects FOR UPDATE
   USING (auth.uid() = created_by);
 
+DROP POLICY IF EXISTS "Project creators can delete their projects" ON projects;
+CREATE POLICY "Project creators can delete their projects"
+  ON projects FOR DELETE
+  USING (auth.uid() = created_by);
+
 -- RLS for project_phases
 ALTER TABLE project_phases ENABLE ROW LEVEL SECURITY;
 
@@ -247,6 +252,11 @@ CREATE POLICY "Project creators can manage phases"
   ON project_phases FOR ALL
   USING (auth.uid() IN (SELECT created_by FROM projects WHERE id = project_phases.project_id));
 
+DROP POLICY IF EXISTS "Project creators can delete phases" ON project_phases;
+CREATE POLICY "Project creators can delete phases"
+  ON project_phases FOR DELETE
+  USING (auth.uid() IN (SELECT created_by FROM projects WHERE id = project_phases.project_id));
+
 -- RLS for milestone_tasks
 ALTER TABLE milestone_tasks ENABLE ROW LEVEL SECURITY;
 
@@ -258,6 +268,17 @@ CREATE POLICY "Anyone can view tasks"
 DROP POLICY IF EXISTS "Project creators can manage tasks" ON milestone_tasks;
 CREATE POLICY "Project creators can manage tasks"
   ON milestone_tasks FOR ALL
+  USING (
+    auth.uid() IN (
+      SELECT created_by FROM projects p
+      JOIN project_phases ph ON p.id = ph.project_id
+      WHERE ph.id = milestone_tasks.phase_id
+    )
+  );
+
+DROP POLICY IF EXISTS "Project creators can delete tasks" ON milestone_tasks;
+CREATE POLICY "Project creators can delete tasks"
+  ON milestone_tasks FOR DELETE
   USING (
     auth.uid() IN (
       SELECT created_by FROM projects p
@@ -283,6 +304,23 @@ DROP POLICY IF EXISTS "Users can update their submissions" ON milestone_submissi
 CREATE POLICY "Users can update their submissions"
   ON milestone_submissions FOR UPDATE
   USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete their submissions" ON milestone_submissions;
+CREATE POLICY "Users can delete their submissions"
+  ON milestone_submissions FOR DELETE
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Project creators can delete submissions" ON milestone_submissions;
+CREATE POLICY "Project creators can delete submissions"
+  ON milestone_submissions FOR DELETE
+  USING (
+    auth.uid() IN (
+      SELECT created_by FROM projects p
+      JOIN project_phases ph ON p.id = ph.project_id
+      JOIN milestone_tasks t ON ph.id = t.phase_id
+      WHERE t.id = milestone_submissions.task_id
+    )
+  );
 
 -- RLS for mentor_feedback
 ALTER TABLE mentor_feedback ENABLE ROW LEVEL SECURITY;

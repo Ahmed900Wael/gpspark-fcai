@@ -212,28 +212,6 @@ export default function ProjectsOverview() {
   const deleteProject = async (projectId: string) => {
     if (!supabase) return;
     try {
-      const { data: phases } = await supabase
-        .from("project_phases")
-        .select("id")
-        .eq("project_id", projectId);
-
-      if (phases && phases.length > 0) {
-        const phaseIds = phases.map(p => p.id);
-
-        const { data: tasks } = await supabase
-          .from("milestone_tasks")
-          .select("id")
-          .in("phase_id", phaseIds);
-
-        if (tasks && tasks.length > 0) {
-          const taskIds = tasks.map(t => t.id);
-          await supabase.from("milestone_submissions").delete().in("task_id", taskIds);
-          await supabase.from("milestone_tasks").delete().in("id", taskIds);
-        }
-
-        await supabase.from("project_phases").delete().in("id", phaseIds);
-      }
-
       const { error } = await supabase
         .from("projects")
         .delete()
