@@ -47,7 +47,7 @@ export interface QwenServiceConfig {
 }
 
 const DEFAULT_CONFIG: Required<Omit<QwenServiceConfig, "supabaseAdmin" | "tools">> = {
-  model: "qwen/qwen3.6:free",
+  model: process.env.QWEN_MODEL || "qwen3.6-plus",
   maxTokens: 4096,
   temperature: 0.7,
   topP: 0.9,
@@ -55,18 +55,35 @@ const DEFAULT_CONFIG: Required<Omit<QwenServiceConfig, "supabaseAdmin" | "tools"
 };
 
 const FALLBACK_MODELS = [
+  process.env.QWEN_MODEL || "qwen3.6-plus",
   "qwen/qwen3.6:free",
   "qwen/qwen-2.5-72b-instruct:free",
-  "qwen/qwen-2.5-32b-instruct:free",
 ];
 
+function getApiConfig(): { apiKey: string; baseUrl: string; provider: "direct" | "openrouter" } {
+  const directKey = process.env.QWEN_API_KEY;
+  if (directKey) {
+    return {
+      apiKey: directKey,
+      baseUrl: process.env.QWEN_API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      provider: "direct",
+    };
+  }
+
+  return {
+    apiKey: process.env.OPENROUTER_API_KEY || "",
+    baseUrl: "https://openrouter.ai/api/v1",
+    provider: "openrouter",
+  };
+}
+
 export class QwenService {
-  private apiKey: string;
+  private apiConfig: { apiKey: string; baseUrl: string; provider: "direct" | "openrouter" };
   private config: Required<Omit<QwenServiceConfig, "supabaseAdmin">>;
   private supabaseAdmin: any;
 
   constructor(config: QwenServiceConfig = {}) {
-    this.apiKey = process.env.OPENROUTER_API_KEY || "";
+    this.apiConfig = getApiConfig();
     this.supabaseAdmin = config.supabaseAdmin || null;
     this.config = {
       model: config.model || DEFAULT_CONFIG.model,
@@ -82,8 +99,8 @@ export class QwenService {
     messages: ChatMessage[],
     overrides?: Partial<QwenServiceConfig>
   ): Promise<ChatResponse> {
-    if (!this.apiKey) {
-      throw new Error("OpenRouter API key not configured");
+    if (!this.apiConfig.apiKey) {
+      throw new Error("API key not configured. Set QWEN_API_KEY or OPENROUTER_API_KEY.");
     }
 
     const config = { ...this.config, ...overrides };
@@ -109,8 +126,8 @@ export class QwenService {
     onChunk: (chunk: string) => void,
     overrides?: Partial<QwenServiceConfig>
   ): Promise<ChatResponse> {
-    if (!this.apiKey) {
-      throw new Error("OpenRouter API key not configured");
+    if (!this.apiConfig.apiKey) {
+      throw new Error("API key not configured. Set QWEN_API_KEY or OPENROUTER_API_KEY.");
     }
 
     const config = { ...this.config, ...overrides };
@@ -290,14 +307,19 @@ export class QwenService {
       }));
     }
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.apiConfig.apiKey}`,
+      "Content-Type": "application/json",
+    };
+
+    if (this.apiConfig.provider === "openrouter") {
+      headers["HTTP-Referer"] = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      headers["X-Title"] = "GPspark";
+    }
+
+    const response = await fetch(`${this.apiConfig.baseUrl}/chat/completions`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-        "X-Title": "GPspark",
-      },
+      headers,
       body: JSON.stringify(body),
     });
 
@@ -355,14 +377,19 @@ export class QwenService {
       }));
     }
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.apiConfig.apiKey}`,
+      "Content-Type": "application/json",
+    };
+
+    if (this.apiConfig.provider === "openrouter") {
+      headers["HTTP-Referer"] = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      headers["X-Title"] = "GPspark";
+    }
+
+    const response = await fetch(`${this.apiConfig.baseUrl}/chat/completions`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-        "X-Title": "GPspark",
-      },
+      headers,
       body: JSON.stringify(body),
     });
 
