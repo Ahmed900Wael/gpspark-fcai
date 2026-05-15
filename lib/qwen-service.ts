@@ -47,7 +47,7 @@ export interface QwenServiceConfig {
 }
 
 const DEFAULT_CONFIG: Required<Omit<QwenServiceConfig, "supabaseAdmin" | "tools">> = {
-  model: "kimi-k2.6",
+  model: "opencode-go/deepseek-v4-flash",
   maxTokens: 4096,
   temperature: 0.7,
   topP: 0.9,
@@ -55,10 +55,10 @@ const DEFAULT_CONFIG: Required<Omit<QwenServiceConfig, "supabaseAdmin" | "tools"
 };
 
 const FALLBACK_MODELS = [
+  "opencode-go/deepseek-v4-flash",
   "kimi-k2.6",
   process.env.QWEN_MODEL || "qwen3.6-plus",
   "qwen/qwen3.6:free",
-  "qwen/qwen-2.5-72b-instruct:free",
 ];
 
 function getApiConfig(): { apiKey: string; baseUrl: string; provider: "opencode" | "dashscope" | "openrouter" } {

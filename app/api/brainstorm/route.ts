@@ -10,7 +10,7 @@ const supabaseAdmin = SUPABASE_URL && SUPABASE_SERVICE_KEY
   : null;
 
 const API_URL = "https://opencode.ai/zen/go/v1/chat/completions";
-const MODEL = "kimi-k2.6";
+const MODEL = "opencode-go/deepseek-v4-flash";
 
 function buildSystemPrompt(userProfile: any, projectFocus?: string) {
   let prompt = `You are GPSpark AI, an expert academic tutor specializing in graduation projects for FCAI-CU students. Your role is to:
