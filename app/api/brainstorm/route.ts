@@ -43,20 +43,6 @@ Keep responses concise but thorough. Use bullet points and numbered lists when a
   return prompt;
 }
 
-function formatMessages(messages: any[], systemPrompt: string) {
-  return messages.map((msg: any) => {
-    if (typeof msg.content === "string") {
-      return { role: msg.role, content: msg.content };
-    }
-
-    if (Array.isArray(msg.content)) {
-      return { role: msg.role, content: msg.content };
-    }
-
-    return { role: msg.role, content: String(msg.content || "") };
-  });
-}
-
 export async function POST(request: Request) {
   try {
     const { messages, projectFocus, sessionId, userId, userProfile } = await request.json();
@@ -69,7 +55,6 @@ export async function POST(request: Request) {
     }
 
     const systemPrompt = buildSystemPrompt(userProfile, projectFocus);
-    const formattedMessages = formatMessages(messages, systemPrompt);
 
     const response = await fetch(API_URL, {
       method: "POST",
@@ -81,9 +66,8 @@ export async function POST(request: Request) {
         model: MODEL,
         messages: [
           { role: "system", content: systemPrompt },
-          ...formattedMessages,
+          ...messages,
         ],
-        stream: true,
         max_tokens: 4096,
         temperature: 0.7,
       }),
@@ -97,86 +81,46 @@ export async function POST(request: Request) {
       );
     }
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        let fullContent = "";
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "";
 
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+    console.log("[BRAINSTEM_API] Response received, length:", content.length);
 
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split("\n");
+    // Save to database
+    if (supabaseAdmin && userId && content) {
+      let currentSessionId = sessionId;
+      if (!currentSessionId) {
+        const { data: sessionData } = await supabaseAdmin
+          .from("brainstorm_sessions")
+          .insert({
+            user_id: userId,
+            project_focus: projectFocus || "General Brainstorming",
+          })
+          .select()
+          .single();
 
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const data = line.slice(6);
-                if (data === "[DONE]") continue;
+        if (sessionData) currentSessionId = sessionData.id;
+      }
 
-                try {
-                  const parsed = JSON.parse(data);
-                  const content = parsed.choices?.[0]?.delta?.content;
-                  if (content) {
-                    fullContent += content;
-                    controller.enqueue(new TextEncoder().encode(content));
-                  }
-                } catch (e) {
-                  // Skip malformed JSON
-                }
-              }
-            }
-          }
-        } finally {
-          reader.releaseLock();
-          controller.close();
-
-          // Save to database after stream completes
-          if (supabaseAdmin && userId && fullContent) {
-            let currentSessionId = sessionId;
-            if (!currentSessionId) {
-              const { data: sessionData } = await supabaseAdmin
-                .from("brainstorm_sessions")
-                .insert({
-                  user_id: userId,
-                  project_focus: projectFocus || "General Brainstorming",
-                })
-                .select()
-                .single();
-
-              if (sessionData) currentSessionId = sessionData.id;
-            }
-
-            if (currentSessionId) {
-              const lastUserMessage = messages.filter((m: any) => m.role === "user").pop();
-              if (lastUserMessage) {
-                await supabaseAdmin.from("chat_messages").insert({
-                  session_id: currentSessionId,
-                  role: lastUserMessage.role,
-                  content: lastUserMessage.content,
-                });
-              }
-
-              await supabaseAdmin.from("chat_messages").insert({
-                session_id: currentSessionId,
-                role: "assistant",
-                content: fullContent,
-              });
-            }
-          }
+      if (currentSessionId) {
+        const lastUserMessage = messages.filter((m: any) => m.role === "user").pop();
+        if (lastUserMessage) {
+          await supabaseAdmin.from("chat_messages").insert({
+            session_id: currentSessionId,
+            role: lastUserMessage.role,
+            content: lastUserMessage.content,
+          });
         }
-      },
-    });
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
-    });
+        await supabaseAdmin.from("chat_messages").insert({
+          session_id: currentSessionId,
+          role: "assistant",
+          content: content,
+        });
+      }
+    }
+
+    return NextResponse.json({ content });
   } catch (error) {
     console.error("[BRAINSTEM_API] Error:", error);
     return NextResponse.json(

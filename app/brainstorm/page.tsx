@@ -339,34 +339,17 @@ export default function BrainstormAI() {
         throw new Error(errorData?.error || `Server error (${response.status})`);
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No reader available");
-
-      const decoder = new TextDecoder();
-      let assistantContent = "";
+      const data = await response.json();
+      const assistantContent = data.content || "";
 
       const assistantMessage: Message = {
         id: `assistant-${Date.now() + 1}`,
         role: "assistant",
-        content: "",
+        content: assistantContent,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        assistantContent += decoder.decode(value, { stream: true });
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMessage.id
-              ? { ...msg, content: assistantContent }
-              : msg
-          )
-        );
-      }
     } catch (error) {
       console.error("[BRAINSTEM] Error:", error);
       addNotification("error", "AI Error", "Failed to get response. Please try again.");
