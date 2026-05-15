@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+const OPENCODE_API_KEY = process.env.OPENCODE_API_KEY;
+const API_URL = "https://opencode.ai/zen/go/v1/chat/completions";
+const MODEL = "kimi-k2.6";
+
 export async function POST(request: Request) {
   try {
     const { messages } = await request.json();
@@ -11,44 +15,88 @@ export async function POST(request: Request) {
       });
     }
 
-    // Dummy data for prototype
+    if (!OPENCODE_API_KEY) {
+      return NextResponse.json({
+        error: "OpenCode AI API key not configured",
+      }, { status: 500 });
+    }
+
+    const conversationText = messages
+      .map((msg: { role: string; content: string }) => `${msg.role}: ${msg.content}`)
+      .join("\n\n");
+
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENCODE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert academic project evaluator for FCAI-CU graduation projects. Analyze the following conversation between a student and AI tutor to identify:
+
+1. **Market Gaps**: Underserved areas, unmet user needs, or opportunities in the project's domain that the student could capitalize on.
+2. **Technical Challenges**: Specific technical hurdles the project will face, with severity levels (high, medium, low).
+
+Return ONLY a JSON object with this exact structure:
+{
+  "marketGaps": [
+    {
+      "title": "<short gap name>",
+      "description": "<1-2 sentence explanation of the gap and why it matters>"
+    }
+  ],
+  "technicalChallenges": [
+    {
+      "title": "<short challenge name>",
+      "description": "<1-2 sentence explanation of the challenge and potential mitigation>",
+      "severity": "high" | "medium" | "low"
+    }
+  ]
+}
+
+Be specific and actionable. Base your analysis ONLY on the conversation context provided. If the conversation lacks sufficient detail, return fewer items with appropriate caveats.`,
+          },
+          {
+            role: "user",
+            content: `Analyze this conversation:\n\n${conversationText}`,
+          },
+        ],
+        max_tokens: 2048,
+        temperature: 0.4,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errorData.error?.message || `API error: ${response.status}` },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "{}";
+
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return NextResponse.json({
+          marketGaps: parsed.marketGaps || [],
+          technicalChallenges: parsed.technicalChallenges || [],
+        });
+      }
+    } catch {
+      // Fall through to defaults
+    }
+
     return NextResponse.json({
-      marketGaps: [
-        {
-          title: "Real-time Fleet Optimization",
-          description: "Few solutions address dynamic route recalculation for urban drone fleets under 500ms latency constraints.",
-        },
-        {
-          title: "Cross-platform Interoperability",
-          description: "Lack of standardized protocols between different drone manufacturers creates integration barriers.",
-        },
-        {
-          title: "Regulatory Compliance Automation",
-          description: "No existing tools automatically adapt flight plans to changing local aviation regulations.",
-        },
-      ],
-      technicalChallenges: [
-        {
-          title: "Swarm Communication Latency",
-          description: "Maintaining sub-100ms inter-drone communication in dense urban environments with signal interference.",
-          severity: "high",
-        },
-        {
-          title: "Battery Life Optimization",
-          description: "Balancing computation-heavy routing algorithms with limited onboard processing power and battery capacity.",
-          severity: "high",
-        },
-        {
-          title: "GPS-denied Navigation",
-          description: "Implementing reliable alternative positioning systems for indoor or signal-blocked areas.",
-          severity: "medium",
-        },
-        {
-          title: "Collision Avoidance at Scale",
-          description: "Scaling decentralized collision avoidance from 5 to 50+ drones without exponential complexity.",
-          severity: "medium",
-        },
-      ],
+      marketGaps: [],
+      technicalChallenges: [],
     });
   } catch (error) {
     console.error("[ANALYSIS_API] Error:", error);
