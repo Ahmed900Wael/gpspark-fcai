@@ -47,7 +47,7 @@ export interface QwenServiceConfig {
 }
 
 const DEFAULT_CONFIG: Required<Omit<QwenServiceConfig, "supabaseAdmin" | "tools">> = {
-  model: "opencode-go/deepseek-v4-flash",
+  model: "deepseek-v4-flash",
   maxTokens: 4096,
   temperature: 0.7,
   topP: 0.9,
@@ -55,7 +55,7 @@ const DEFAULT_CONFIG: Required<Omit<QwenServiceConfig, "supabaseAdmin" | "tools"
 };
 
 const FALLBACK_MODELS = [
-  "opencode-go/deepseek-v4-flash",
+  "deepseek-v4-flash",
   "kimi-k2.6",
   process.env.QWEN_MODEL || "qwen3.6-plus",
   "qwen/qwen3.6:free",

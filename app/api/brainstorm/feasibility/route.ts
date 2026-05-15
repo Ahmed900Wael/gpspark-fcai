@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 const OPENCODE_API_KEY = process.env.OPENCODE_API_KEY;
 const API_URL = "https://opencode.ai/zen/go/v1/chat/completions";
-const MODEL = "opencode-go/deepseek-v4-flash";
+const MODEL = "deepseek-v4-flash";
 
 export async function POST(request: Request) {
   try {
