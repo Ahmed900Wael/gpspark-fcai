@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENCODE_API_KEY = process.env.OPENCODE_API_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -9,11 +9,8 @@ const supabaseAdmin = SUPABASE_URL && SUPABASE_SERVICE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   : null;
 
-const MODELS = [
-  "z-ai/glm-4.5-air:free",
-  "meta-llama/llama-3.2-3b-instruct:free",
-  "qwen/qwen-2.5-7b-instruct:free",
-];
+const API_URL = "https://opencode.ai/zen/go/v1/chat/completions";
+const MODEL = "kimi-k2.6";
 
 function buildSystemPrompt(userProfile: any, projectFocus?: string) {
   let prompt = `You are GPSpark AI, an expert academic tutor specializing in graduation projects for FCAI-CU students. Your role is to:
@@ -46,56 +43,56 @@ Keep responses concise but thorough. Use bullet points and numbered lists when a
   return prompt;
 }
 
-async function fetchWithRetry(messages: any[], systemPrompt: string, modelIndex: number = 0): Promise<Response> {
-  const model = MODELS[modelIndex];
-  
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://gpspark.vercel.app",
-      "X-Title": "GPspark",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages,
-      ],
-      stream: true,
-      max_tokens: 2048,
-      temperature: 0.7,
-    }),
+function formatMessages(messages: any[], systemPrompt: string) {
+  return messages.map((msg: any) => {
+    if (typeof msg.content === "string") {
+      return { role: msg.role, content: msg.content };
+    }
+
+    if (Array.isArray(msg.content)) {
+      return { role: msg.role, content: msg.content };
+    }
+
+    return { role: msg.role, content: String(msg.content || "") };
   });
-
-  if (!response.ok && modelIndex < MODELS.length - 1) {
-    console.warn(`[BRAINSTEM_API] Model ${model} failed, trying next...`);
-    return fetchWithRetry(messages, systemPrompt, modelIndex + 1);
-  }
-
-  return response;
 }
 
 export async function POST(request: Request) {
   try {
     const { messages, projectFocus, sessionId, userId, userProfile } = await request.json();
 
-    if (!OPENROUTER_API_KEY) {
+    if (!OPENCODE_API_KEY) {
       return NextResponse.json(
-        { error: "OpenRouter API key not configured" },
+        { error: "OpenCode AI API key not configured" },
         { status: 500 }
       );
     }
 
     const systemPrompt = buildSystemPrompt(userProfile, projectFocus);
+    const formattedMessages = formatMessages(messages, systemPrompt);
 
-    const response = await fetchWithRetry(messages, systemPrompt);
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENCODE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...formattedMessages,
+        ],
+        stream: true,
+        max_tokens: 4096,
+        temperature: 0.7,
+      }),
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errorData.error?.message || "Failed to get AI response" },
+        { error: errorData.error?.message || `API error: ${response.status}` },
         { status: response.status }
       );
     }

@@ -47,7 +47,7 @@ export interface QwenServiceConfig {
 }
 
 const DEFAULT_CONFIG: Required<Omit<QwenServiceConfig, "supabaseAdmin" | "tools">> = {
-  model: process.env.QWEN_MODEL || "qwen3.6-plus",
+  model: "kimi-k2.6",
   maxTokens: 4096,
   temperature: 0.7,
   topP: 0.9,
@@ -55,18 +55,28 @@ const DEFAULT_CONFIG: Required<Omit<QwenServiceConfig, "supabaseAdmin" | "tools"
 };
 
 const FALLBACK_MODELS = [
+  "kimi-k2.6",
   process.env.QWEN_MODEL || "qwen3.6-plus",
   "qwen/qwen3.6:free",
   "qwen/qwen-2.5-72b-instruct:free",
 ];
 
-function getApiConfig(): { apiKey: string; baseUrl: string; provider: "direct" | "openrouter" } {
+function getApiConfig(): { apiKey: string; baseUrl: string; provider: "opencode" | "dashscope" | "openrouter" } {
+  const opencodeKey = process.env.OPENCODE_API_KEY;
+  if (opencodeKey) {
+    return {
+      apiKey: opencodeKey,
+      baseUrl: "https://opencode.ai/zen/go/v1",
+      provider: "opencode",
+    };
+  }
+
   const directKey = process.env.QWEN_API_KEY;
   if (directKey) {
     return {
       apiKey: directKey,
       baseUrl: process.env.QWEN_API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1",
-      provider: "direct",
+      provider: "dashscope",
     };
   }
 
@@ -78,7 +88,7 @@ function getApiConfig(): { apiKey: string; baseUrl: string; provider: "direct" |
 }
 
 export class QwenService {
-  private apiConfig: { apiKey: string; baseUrl: string; provider: "direct" | "openrouter" };
+  private apiConfig: { apiKey: string; baseUrl: string; provider: "opencode" | "dashscope" | "openrouter" };
   private config: Required<Omit<QwenServiceConfig, "supabaseAdmin">>;
   private supabaseAdmin: any;
 
